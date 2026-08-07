@@ -126,13 +126,15 @@ class ProtectedMusicControlView(discord.ui.View):
         if not self.guild_id and guild:
             self.guild_id = guild.id
 
+        is_owner = (user.id == guild.owner_id)
+        perms = interaction.permissions if hasattr(interaction, "permissions") and interaction.permissions else getattr(user, "guild_permissions", None)
+        is_staff = is_owner or (perms and (perms.administrator or perms.manage_guild or perms.manage_channels or perms.manage_messages))
         is_requester = self.current_song and self.current_song.requester and user.id == self.current_song.requester.id
-        is_admin = user.id == guild.owner_id or (hasattr(user, "guild_permissions") and user.guild_permissions.manage_guild)
 
-        if self.current_song and not (is_requester or is_admin):
+        if self.current_song and not (is_requester or is_staff):
             req_name = self.current_song.requester.mention if self.current_song and self.current_song.requester else "the song requester"
             await interaction.response.send_message(
-                f"{get_emoji('warning', guild)} **Access Denied:** Only {req_name} or Server Admins can control this music playback.",
+                f"{get_emoji('warning', guild)} **Access Denied:** Only {req_name} or Server Admins/Staff can control this music playback.",
                 ephemeral=True
             )
             return False
@@ -152,6 +154,8 @@ class ProtectedMusicControlView(discord.ui.View):
         elif vc.is_paused():
             vc.resume()
             await interaction.response.send_message(f"{get_emoji('music', guild)} **Resumed music playback.**", ephemeral=True)
+        else:
+            await interaction.response.send_message(f"⚠️ Voice playback state updated.", ephemeral=True)
 
     @discord.ui.button(label="Skip", style=discord.ButtonStyle.secondary, emoji="⏭️", custom_id="music_skip_btn")
     async def skip_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -466,8 +470,18 @@ class Music(commands.Cog):
     async def slash_play(self, interaction: discord.Interaction, query: str):
         await self._do_play(interaction, query)
 
-    @app_commands.command(name="skip", description="Skip current playing track")
+    @app_commands.command(name="skip", description="[STAFF ONLY] Skip current playing track")
     async def slash_skip(self, interaction: discord.Interaction):
+        user = interaction.user
+        guild = interaction.guild
+        is_owner = (user.id == guild.owner_id)
+        perms = interaction.permissions if hasattr(interaction, "permissions") and interaction.permissions else getattr(user, "guild_permissions", None)
+        is_staff = is_owner or (perms and (perms.administrator or perms.manage_guild or perms.manage_channels or perms.manage_messages))
+        
+        if not is_staff:
+            await interaction.response.send_message("❌ Only Server Admins or Staff can skip tracks. Members can only use `/play`.", ephemeral=True)
+            return
+
         vc = interaction.guild.voice_client
         if not vc or not (vc.is_playing() or vc.is_paused()):
             await interaction.response.send_message("❌ Nothing is currently playing.", ephemeral=True)
@@ -476,8 +490,18 @@ class Music(commands.Cog):
         vc.stop()
         await interaction.response.send_message(f"{get_emoji('success', interaction.guild)} **Skipped current track.**")
 
-    @app_commands.command(name="stop", description="Stop music playback and clear queue")
+    @app_commands.command(name="stop", description="[STAFF ONLY] Stop music playback and clear queue")
     async def slash_stop(self, interaction: discord.Interaction):
+        user = interaction.user
+        guild = interaction.guild
+        is_owner = (user.id == guild.owner_id)
+        perms = interaction.permissions if hasattr(interaction, "permissions") and interaction.permissions else getattr(user, "guild_permissions", None)
+        is_staff = is_owner or (perms and (perms.administrator or perms.manage_guild or perms.manage_channels or perms.manage_messages))
+        
+        if not is_staff:
+            await interaction.response.send_message("❌ Only Server Admins or Staff can stop music playback.", ephemeral=True)
+            return
+
         vc = interaction.guild.voice_client
         if not vc:
             await interaction.response.send_message("❌ Bot is not connected.", ephemeral=True)
@@ -498,6 +522,16 @@ class Music(commands.Cog):
 
     @commands.command(name="skip", aliases=["s"])
     async def prefix_skip(self, ctx):
+        author = ctx.author
+        guild = ctx.guild
+        is_owner = (author.id == guild.owner_id)
+        perms = getattr(author, "guild_permissions", None)
+        is_staff = is_owner or (perms and (perms.administrator or perms.manage_guild or perms.manage_channels or perms.manage_messages))
+
+        if not is_staff:
+            await ctx.send("❌ Only Server Admins or Staff can skip tracks. Members can only use `!play`.")
+            return
+
         vc = ctx.guild.voice_client
         if not vc or not (vc.is_playing() or vc.is_paused()):
             await ctx.send("❌ Nothing is currently playing.")
@@ -508,6 +542,16 @@ class Music(commands.Cog):
 
     @commands.command(name="stop", aliases=["disconnect", "dc"])
     async def prefix_stop(self, ctx):
+        author = ctx.author
+        guild = ctx.guild
+        is_owner = (author.id == guild.owner_id)
+        perms = getattr(author, "guild_permissions", None)
+        is_staff = is_owner or (perms and (perms.administrator or perms.manage_guild or perms.manage_channels or perms.manage_messages))
+
+        if not is_staff:
+            await ctx.send("❌ Only Server Admins or Staff can stop music playback.")
+            return
+
         vc = ctx.guild.voice_client
         if not vc:
             await ctx.send("❌ Bot is not connected.")

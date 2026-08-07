@@ -94,10 +94,10 @@ class AegisBot(commands.Bot):
         async def sync_slash():
             await self.wait_until_ready()
             try:
-                guild_obj = discord.Object(id=config.PRIMARY_GUILD_ID)
-                # Clear leftover guild-specific commands to eliminate duplicates
-                self.tree.clear_commands(guild=guild_obj)
-                await self.tree.sync(guild=guild_obj)
+                if config.PRIMARY_GUILD_ID > 0:
+                    guild_obj = discord.Object(id=config.PRIMARY_GUILD_ID)
+                    self.tree.clear_commands(guild=guild_obj)
+                    await self.tree.sync(guild=guild_obj)
 
                 # Sync single clean global slash command set
                 synced = await self.tree.sync()
@@ -115,15 +115,16 @@ class AegisBot(commands.Bot):
         logger.info(f" 👥 Serving {len(self.guilds)} Guilds & {total_members} Users")
         logger.info(f"═══════════════════════════════════════════════════════════")
 
-        # Auto-ensure dedicated security log channel in all guilds
+        # Auto-ensure dedicated security log channel & sync server PFP avatar in all guilds
         from embed_builder import get_or_create_log_channel
         for guild in self.guilds:
             try:
                 ch = await get_or_create_log_channel(guild)
                 if ch:
                     logger.info(f"Verified/Created dedicated security log channel #{ch.name} in {guild.name}")
+                await self.sync_guild_avatar(guild)
             except Exception as e:
-                logger.error(f"Error creating log channel in {guild.name}: {e}")
+                logger.error(f"Error initializing guild {guild.name}: {e}")
 
         activity = discord.Streaming(
             name="JOYST CORPORATION SECURITY",
@@ -131,9 +132,21 @@ class AegisBot(commands.Bot):
         )
         await self.change_presence(status=discord.Status.online, activity=activity)
 
+    async def sync_guild_avatar(self, guild: discord.Guild):
+        """Dynamically syncs the bot's server PFP avatar to match that specific server's logo!"""
+        if not guild or not guild.me or not guild.icon:
+            return
+        try:
+            icon_bytes = await guild.icon.read()
+            await guild.me.edit(avatar=icon_bytes)
+            logger.info(f"Updated bot server avatar PFP for {guild.name} to server logo!")
+        except Exception as e:
+            logger.debug(f"Server avatar PFP update note for {guild.name}: {e}")
+
     async def on_guild_join(self, guild: discord.Guild):
         from embed_builder import get_or_create_log_channel
         await get_or_create_log_channel(guild)
+        await self.sync_guild_avatar(guild)
 
 def clean_disk_space():
     """Purges temporary files, cache directories, and audio artifacts to prevent Pterodactyl disk quota limits."""

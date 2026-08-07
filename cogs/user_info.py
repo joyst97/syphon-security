@@ -92,15 +92,24 @@ class UserInfo(commands.Cog):
     # --- Commands ---
 
     @commands.command(name="userinfo", aliases=["uinfo", "whois", "user"])
+    @commands.has_permissions(administrator=True)
     async def prefix_userinfo(self, ctx, member: discord.Member = None):
-        """View detailed account info, age, and alt risk score"""
+        """[ADMIN ONLY] View detailed account info, age, and alt risk score"""
+        if not (ctx.author.id == ctx.guild.owner_id or (hasattr(ctx.author, "guild_permissions") and ctx.author.guild_permissions.administrator)):
+            await ctx.send("❌ Only Server Admins or Server Owner can use userinfo.")
+            return
         await self._do_userinfo(ctx, member)
 
     # --- Slash Commands ---
 
-    @app_commands.command(name="userinfo", description="View detailed member account info & alt risk assessment")
+    @app_commands.command(name="userinfo", description="[ADMIN ONLY] View detailed member account info & alt risk assessment")
     @app_commands.describe(member="Target member to inspect (optional)")
+    @app_commands.checks.has_permissions(administrator=True)
     async def slash_userinfo(self, interaction: discord.Interaction, member: discord.Member = None):
+        user = interaction.user
+        if not (user.id == interaction.guild.owner_id or (hasattr(user, "guild_permissions") and user.guild_permissions.administrator)):
+            await interaction.response.send_message("❌ Only Server Admins or Server Owner can use userinfo.", ephemeral=True)
+            return
         await self._do_userinfo(interaction, member)
 
 async def setup(bot):

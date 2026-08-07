@@ -81,29 +81,41 @@ def resolve_guild_id(gid=None):
         return str(auth_guilds[0])
     return None
 
+from flask import render_template_string
+
+def render_template_safe(template_name):
+    try:
+        return render_template(template_name)
+    except Exception:
+        file_path = os.path.join(BASE_DIR, "templates", template_name)
+        if os.path.exists(file_path):
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+                return render_template_string(f.read())
+        return f"<h2>SYPHON SECURITY CYBER OS</h2><p>System Initializing...</p>"
+
 # --- MULTI-PAGE ROUTES ---
 
 @app.route("/")
 def landing_page():
-    return render_template("landing.html")
+    return render_template_safe("landing.html")
 
 @app.route("/dashboard")
 def dashboard():
     if not is_admin_authenticated():
         return redirect("/login/discord")
-    return render_template("index.html")
+    return render_template_safe("index.html")
 
 @app.route("/features")
 def features_page():
-    return render_template("features.html")
+    return render_template_safe("features.html")
 
 @app.route("/privacy")
 def privacy_policy():
-    return render_template("privacy.html")
+    return render_template_safe("privacy.html")
 
 @app.route("/terms")
 def terms_of_service():
-    return render_template("terms.html")
+    return render_template_safe("terms.html")
 
 # --- DISCORD OAUTH2 AUTHENTICATION & GUILD AUTHORIZATION GATEWAY ---
 

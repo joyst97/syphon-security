@@ -389,13 +389,15 @@ class AutoMod(commands.Cog):
         if not isinstance(member, discord.Member):
             return
 
-        if member.id == guild.owner_id:
+        if member.id == guild.owner_id or member.guild_permissions.administrator or member.guild_permissions.manage_guild:
             return
 
-        user_roles = [r.id for r in member.roles]
+        user_roles = [str(r.id) for r in member.roles]
         channel_id_str = str(message.channel.id)
 
-        if db.is_whitelisted(str(guild.id), str(member.id), "all", user_roles, channel_id_str):
+        if (db.is_whitelisted(str(guild.id), str(member.id), "all", user_roles, channel_id_str) or
+            db.is_whitelisted(str(guild.id), str(member.id), "anti_link", user_roles, channel_id_str) or
+            db.is_whitelisted(str(guild.id), str(member.id), "anti_spam", user_roles, channel_id_str)):
             return
 
         msg_clean = message.content.lower().strip()

@@ -2,6 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import logging
+import time
 import database as db
 import config
 from embed_builder import joyst_embed, COLOR_SUCCESS, COLOR_WARNING, COLOR_DANGER, COLOR_INFO, COLOR_PURPLE, COLOR_DARK
@@ -393,6 +394,66 @@ class SecurityCmd(commands.Cog):
     @commands.command(name="help", aliases=["commands"])
     async def prefix_help(self, ctx):
         await self._send_advanced_help(ctx)
+
+    @commands.command(name="ping", aliases=["latency", "speed"])
+    @commands.has_permissions(administrator=True)
+    async def prefix_ping(self, ctx):
+        if not is_admin_or_owner(ctx):
+            await ctx.send("❌ Only Server Admins or Server Owner can check bot ping.")
+            return
+        ws_ping = round(self.bot.latency * 1000)
+        start_time = time.time()
+        msg = await ctx.send("📡 Measuring SYPHON SECURITY latency...")
+        end_time = time.time()
+        api_ping = round((end_time - start_time) * 1000)
+        
+        db_start = time.time()
+        db.get_guild_settings(str(ctx.guild.id))
+        db_ping = round((time.time() - db_start) * 1000)
+        
+        embed = joyst_embed(
+            title=f"{get_emoji('bolt', ctx.guild)} **SYPHON SECURITY Network & Engine Latency**",
+            description=(
+                f"• ⚡ **WebSocket Latency:** `{ws_ping} ms`\n"
+                f"• 🚀 **Discord API Response:** `{api_ping} ms`\n"
+                f"• 💾 **Database Query Latency:** `{db_ping} ms`\n"
+                f"• 🌐 **VPS Node Status:** `Operational (Online)`"
+            ),
+            color=COLOR_SUCCESS,
+            guild=ctx.guild
+        )
+        embed.set_footer(text=f"{config.SERVER_NAME} Security OS • Real-Time Health Metrics")
+        await msg.edit(content=None, embed=embed)
+
+    @app_commands.command(name="ping", description="[ADMIN ONLY] Check live bot network latency, API response speed & database health")
+    @app_commands.checks.has_permissions(administrator=True)
+    async def slash_ping(self, interaction: discord.Interaction):
+        if not is_admin_or_owner(interaction):
+            await interaction.response.send_message("❌ Only Server Admins or Server Owner can check bot ping.", ephemeral=True)
+            return
+        ws_ping = round(self.bot.latency * 1000)
+        start_time = time.time()
+        await interaction.response.defer(ephemeral=False)
+        end_time = time.time()
+        api_ping = round((end_time - start_time) * 1000)
+        
+        db_start = time.time()
+        db.get_guild_settings(str(interaction.guild.id))
+        db_ping = round((time.time() - db_start) * 1000)
+
+        embed = joyst_embed(
+            title=f"{get_emoji('bolt', interaction.guild)} **SYPHON SECURITY Network & Engine Latency**",
+            description=(
+                f"• ⚡ **WebSocket Latency:** `{ws_ping} ms`\n"
+                f"• 🚀 **Discord API Response:** `{api_ping} ms`\n"
+                f"• 💾 **Database Query Latency:** `{db_ping} ms`\n"
+                f"• 🌐 **VPS Node Status:** `Operational (Online)`"
+            ),
+            color=COLOR_SUCCESS,
+            guild=interaction.guild
+        )
+        embed.set_footer(text=f"{config.SERVER_NAME} Security OS • Real-Time Health Metrics")
+        await interaction.followup.send(embed=embed)
 
 async def setup(bot):
     await bot.add_cog(SecurityCmd(bot))

@@ -46,8 +46,13 @@ class TicketControlView(discord.ui.View):
     async def claim_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         guild = interaction.guild
         user = interaction.user
+        is_owner = (user.id == guild.owner_id)
+        perms = interaction.permissions if hasattr(interaction, "permissions") and interaction.permissions else getattr(user, "guild_permissions", None)
+        is_admin = False
+        if perms:
+            is_admin = perms.administrator or perms.manage_guild or perms.manage_channels or perms.manage_messages
 
-        if not (user.id == guild.owner_id or (hasattr(user, "guild_permissions") and (user.guild_permissions.manage_guild or user.guild_permissions.administrator))):
+        if not (is_owner or is_admin):
             await interaction.response.send_message(f"{get_emoji('cancel', guild)} Only Support Staff or Admins can claim tickets.", ephemeral=True)
             return
 
@@ -142,11 +147,11 @@ class TicketCategorySelect(discord.ui.Select):
         clean_username = user.name.lower().replace(" ", "-")
         target_name = f"ticket-{category_choice}-{clean_username}"
 
-        # Check for existing open ticket for user in this category
+        # Check for existing open ticket for user in this category inside THIS specific server
         for ch in guild.text_channels:
             if ch.name == target_name:
                 await interaction.followup.send(
-                    f"{get_emoji('warning', guild)} You already have an open ticket in {ch.mention}!",
+                    f"{get_emoji('warning', guild)} **Existing Ticket Found in {guild.name}:** You already have an active ticket in {ch.mention}! Please close that channel first or use your existing ticket.",
                     ephemeral=True
                 )
                 return

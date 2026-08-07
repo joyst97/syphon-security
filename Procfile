@@ -1,1 +1,1 @@
-web: gunicorn web_dashboard:app
+web: gunicorn wsgi:app

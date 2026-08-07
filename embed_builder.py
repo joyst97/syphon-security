@@ -54,14 +54,14 @@ def joyst_embed(
     if author_name:
         embed.set_author(name=author_name, icon_url=author_icon)
     elif guild:
-        g_icon = str(guild.icon.url) if guild.icon else None
+        g_icon = str(guild.icon.url) if guild and guild.icon else (str(guild.me.display_avatar.url) if guild and guild.me else None)
         embed.set_author(name=guild.name, icon_url=g_icon)
 
-    thumb_url = thumbnail or (str(guild.icon.url) if guild and guild.icon else None)
+    thumb_url = thumbnail or (str(guild.icon.url) if guild and guild.icon else (str(guild.me.display_avatar.url) if guild and guild.me else None))
     if thumb_url:
         embed.set_thumbnail(url=thumb_url)
 
-    footer_text = footer if footer else (f"{guild.name} Security OS" if guild else f"{config.SERVER_NAME}")
+    footer_text = footer if footer else (f"{guild.name} • Cyber Security OS" if guild else f"{config.SERVER_NAME}")
     footer_icon = (str(guild.icon.url) if guild and guild.icon else None)
     embed.set_footer(text=footer_text, icon_url=footer_icon)
 
