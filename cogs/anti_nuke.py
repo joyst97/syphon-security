@@ -14,14 +14,14 @@ class AntiNuke(commands.Cog):
         self.bot = bot
         self.action_trackers = defaultdict(lambda: defaultdict(list))
 
-    def _is_rate_limited(self, guild_id: str, user_id: str, action_type: str, limit: int = 2, window: int = 10) -> bool:
+    def _is_rate_limited(self, guild_id: str, user_id: str, action_type: str, limit: int = 1, window: int = 10) -> bool:
         now = time.time()
         key = (user_id, action_type)
         timestamps = self.action_trackers[guild_id][key]
         timestamps = [t for t in timestamps if now - t <= window]
         timestamps.append(now)
         self.action_trackers[guild_id][key] = timestamps
-        return len(timestamps) > limit
+        return len(timestamps) >= limit
 
     async def _quarantine_and_kick(self, guild: discord.Guild, member: discord.Member, reason: str, ban_user: bool = False):
         if member.id == guild.owner_id or member.id == self.bot.user.id:
@@ -165,6 +165,11 @@ class AntiNuke(commands.Cog):
                     member = guild.get_member(user.id)
                     if member:
                         await self._quarantine_and_kick(guild, member, "Exceeded mass channel deletion limit (Nuke Attempt).", ban_user=True)
+                    try:
+                        new_ch = await channel.clone(reason=f"[{config.SERVER_NAME} Anti-Nuke] Restoring deleted channel.")
+                        logger.info(f"Restored deleted channel #{channel.name} as #{new_ch.name} in {guild.name}")
+                    except Exception as e:
+                        logger.error(f"Failed to restore deleted channel: {e}")
             break
 
     # --- 3. ANTI-MASS ROLE CREATE / DELETE ---

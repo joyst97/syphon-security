@@ -3,6 +3,8 @@ from discord import app_commands
 from discord.ext import commands
 import logging
 import time
+import psutil
+import platform
 import database as db
 import config
 from embed_builder import joyst_embed, COLOR_SUCCESS, COLOR_WARNING, COLOR_DANGER, COLOR_INFO, COLOR_PURPLE, COLOR_DARK
@@ -28,12 +30,12 @@ class HelpDropdown(discord.ui.Select):
     def __init__(self, guild: discord.Guild):
         options = [
             discord.SelectOption(label="Security & Anti-Nuke", value="security", description="Anti-Nuke, Anti-Raid, Emergency Lockdown", emoji=get_emoji("shield", guild)),
-            discord.SelectOption(label="Moderation & Whitelist", value="moderation", description="Ban, Timeout, Purge, User/Role/Channel Whitelist", emoji=get_emoji("ban", guild)),
-            discord.SelectOption(label="High-Quality Music", value="music", description="Play, Skip, Loop Track/Queue, Autoplay", emoji=get_emoji("music", guild)),
-            discord.SelectOption(label="Giveaways & Tickets", value="giveaway", description="Giveaway Manager, Support Ticket Panel", emoji=get_emoji("bell", guild)),
-            discord.SelectOption(label="Server Utilities & Stats", value="utilities", description="Total Members Counter, Temp VC Generator", emoji=get_emoji("info", guild)),
+            discord.SelectOption(label="Moderation & Enforcement", value="moderation", description="Ban, TempBan, Timeout, Purge, Whitelist, Say", emoji=get_emoji("ban", guild)),
+            discord.SelectOption(label="High-Quality Music", value="music", description="Play, Skip, Stop, Loop, Autoplay", emoji=get_emoji("music", guild)),
+            discord.SelectOption(label="Giveaways & Tickets", value="giveaway", description="Support Ticket Panel & Giveaway Manager", emoji=get_emoji("bell", guild)),
+            discord.SelectOption(label="System Info & Utilities", value="utilities", description="Ping, BotInfo, ServerInfo, Uptime, Stats", emoji=get_emoji("bot", guild)),
         ]
-        super().__init__(placeholder="🔍 Select a command category...", min_values=1, max_values=1, options=options)
+        super().__init__(placeholder="🔍 Choose a Command Category...", min_values=1, max_values=1, options=options)
         self.guild = guild
 
     async def callback(self, interaction: discord.Interaction):
@@ -42,55 +44,60 @@ class HelpDropdown(discord.ui.Select):
 
         if selected == "security":
             desc = (
-                f"{get_emoji('shield', guild)} **SECURITY & ANTI-NUKE MATRIX**\n\n"
-                f"• `/emergencylockdown` / `!emergencylockdown` — **[OWNER ONLY]** Lock all channels & revoke admin role perms in 1 sec.\n"
-                f"• `/unlockdown` / `!unlockdown` — **[OWNER ONLY]** Lift emergency military lockdown.\n"
-                f"• `/security status` / `!security status` — View live anti-nuke & anti-raid system status.\n"
-                f"• `/security setup [#log-channel]` — Configure dedicated security audit log channel.\n"
-                f"• `/audit [limit]` / `!audit` — View recent security audit logs & trigger events."
+                f"{get_emoji('danger', guild)} **SECURITY & ANTI-NUKE MATRIX**\n\n"
+                f"• `,emergencylockdown` / `/emergencylockdown` — **[OWNER ONLY]** Instant 1-second server lockdown & role strip.\n\n"
+                f"• `,unlockdown` / `/unlockdown` — **[OWNER ONLY]** Lift emergency lockdown.\n\n"
+                f"• `,security status` / `/security status` — View live anti-nuke & anti-raid system status.\n\n"
+                f"• `,whitelist add <target> [feature]` / `/whitelist` — Add user/role/channel to whitelist.\n\n"
+                f"• `,whitelist remove <target_id>` — Remove entry from whitelist.\n\n"
+                f"• `,whitelist` / `/whitelist list` — View current whitelisted entries.\n\n"
+                f"• `,audit` / `/audit` — View recent security audit logs."
             )
             embed = joyst_embed(description=desc, color=COLOR_DANGER, guild=guild)
 
         elif selected == "moderation":
             desc = (
-                f"{get_emoji('ban', guild)} **MODERATION & WHITELIST SUITE**\n\n"
-                f"• `!tempban @user <time> [reason]` — Wick-style Interactive TempBan with confirmation buttons.\n"
-                f"• `!timeout @user <time>` / `!untimeout` — Apply/remove member timeout.\n"
-                f"• `!ban @user` / `!kick @user` / `!warn @user` — Moderator enforcement commands.\n"
-                f"• `!purge <1-1000>` — Fast message purging.\n"
-                f"• `/whitelist user/role/channel` — Whitelist entities or channels (e.g. allow links in #media).\n"
-                f"• `/whitelist remove` / `/whitelist list` — View or modify whitelist database."
+                f"{get_emoji('ban', guild)} **MODERATION & ENFORCEMENT SUITE**\n\n"
+                f"• `,ban @user [reason]` / `/ban` — Ban a member from the server.\n\n"
+                f"• `,tempban @user <time> [reason]` — Temporarily ban a user (e.g. `,tempban @user 7d`).\n\n"
+                f"• `,kick @user [reason]` / `/kick` — Kick a member from the server.\n\n"
+                f"• `,timeout @user <time>` / `!untimeout` — Apply or remove member timeout (e.g. `,timeout @user 10m`).\n\n"
+                f"• `,purge <1-1000>` / `/purge` — Bulk clean text channel messages.\n\n"
+                f"• `,warn @user [reason]` — Issue an official warning to a member.\n\n"
+                f"• `,say <text>` — **[HIDDEN ADMIN COMMAND]** Repeat message directly as bot."
             )
             embed = joyst_embed(description=desc, color=COLOR_PURPLE, guild=guild)
 
         elif selected == "music":
             desc = (
-                f"{get_emoji('play', guild)} **ULTRA-MODERN MUSIC PLAYER**\n\n"
-                f"• `/play <query>` / `!play <query>` — Play YouTube search, link, or direct audio stream.\n"
-                f"• `/skip` / `!skip` — Skip current track (Requester or Admin protected).\n"
-                f"• `/loop <off/track/queue>` / `!loop` — Toggle track or queue loop mode.\n"
-                f"• `/autoplay` / `!autoplay` — Toggle non-stop related song autoplay.\n"
-                f"• `/stop` / `!stop` — Clear queue and disconnect bot from VC."
+                f"{get_emoji('music', guild)} **HIGH-QUALITY MUSIC ENGINE**\n\n"
+                f"• `,play <song name / url>` / `/play` — **[OPEN FOR ALL MEMBERS]** Play music stream.\n\n"
+                f"• `,skip` / `/skip` — **[STAFF ONLY]** Skip current playing track.\n\n"
+                f"• `,stop` / `/stop` — **[STAFF ONLY]** Clear queue & disconnect bot from Voice Channel.\n\n"
+                f"• `,loop` / `/loop` — **[STAFF ONLY]** Toggle Track or Queue loop mode.\n\n"
+                f"• `,autoplay` / `/autoplay` — **[STAFF ONLY]** Toggle non-stop related music autoplay."
             )
             embed = joyst_embed(description=desc, color=COLOR_INFO, guild=guild)
 
         elif selected == "giveaway":
             desc = (
-                f"🎉 **GIVEAWAYS & SUPPORT TICKET SYSTEM**\n\n"
-                f"• `/giveaway start <time> <winners> <prize>` — Deploy interactive giveaway with entry buttons.\n"
-                f"• `/giveaway end <msg_id>` / `/giveaway reroll <msg_id>` — End or pick new winner.\n"
-                f"• `/ticket setup [#channel]` — Deploy interactive **📩 Open Support Ticket** panel.\n"
-                f"• `/ticket close` / `!close` — Close active ticket channel with auto-delete timer."
+                f"{get_emoji('bell', guild)} **GIVEAWAY & SUPPORT TICKET SYSTEM**\n\n"
+                f"• `,ticket setup` / `/ticket setup` — Deploy interactive **📩 Support Ticket Dropdown Panel**.\n\n"
+                f"• `,close` / `/ticket close` — Close current support ticket channel.\n\n"
+                f"• `/giveaway start <time> <winners> <prize>` — Deploy interactive giveaway with entry buttons.\n\n"
+                f"• `/giveaway end <msg_id>` / `/giveaway reroll <msg_id>` — End or pick new giveaway winner."
             )
             embed = joyst_embed(description=desc, color=COLOR_SUCCESS, guild=guild)
 
         elif selected == "utilities":
             desc = (
-                f"📊 **SERVER UTILITIES & AUTOMATION**\n\n"
-                f"• `/stats setup` / `!stats setup` — Auto-deploy live locked **`👥 Total Members: X`** voice counter channel.\n"
-                f"• `/stats update` — Force sync total member count channel name.\n"
-                f"• `/tempvc setup` / `!tempvc setup` — Deploy master **`➕ Join to Create`** temp voice generator.\n"
-                f"• `!userinfo @user` — View account creation date, badges, and alt risk score."
+                f"{get_emoji('bot', guild)} **SYSTEM INFO & UTILITIES**\n\n"
+                f"• `,ping` / `/ping` — **[ADMIN ONLY]** View WebSocket, Discord API & DB Latency.\n\n"
+                f"• `,botinfo` / `/botinfo` — View bot RAM allocation, CPU load, uptime & VPS node health.\n\n"
+                f"• `,serverinfo` / `/serverinfo` — View detailed server stats, owner, boost tier & member breakdown.\n\n"
+                f"• `,uptime` / `/uptime` — View continuous online uptime tracker.\n\n"
+                f"• `,userinfo @user` / `/userinfo` — View user account creation date & permissions.\n\n"
+                f"• `,stats setup` / `/stats setup` — Deploy live member counter voice channel."
             )
             embed = joyst_embed(description=desc, color=COLOR_INFO, guild=guild)
 
@@ -108,7 +115,7 @@ class AdvancedHelpView(discord.ui.View):
             return False
         return True
 
-    @discord.ui.button(label="Close", style=discord.ButtonStyle.danger, emoji="🗑️")
+    @discord.ui.button(label="Close Menu", style=discord.ButtonStyle.danger, custom_id="help_close_btn")
     async def close_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         await interaction.message.delete()
 
@@ -454,6 +461,124 @@ class SecurityCmd(commands.Cog):
         )
         embed.set_footer(text=f"{config.SERVER_NAME} Security OS • Real-Time Health Metrics")
         await interaction.followup.send(embed=embed)
+
+
+
+    # --- UPTIME COMMANDS ---
+    async def _do_uptime(self, ctx_or_interaction):
+        guild = ctx_or_interaction.guild
+        start = getattr(self.bot, "start_time", time.time())
+        uptime_seconds = int(time.time() - start)
+        days = uptime_seconds // 86400
+        hours = (uptime_seconds % 86400) // 3600
+        minutes = (uptime_seconds % 3600) // 60
+        seconds = uptime_seconds % 60
+
+        uptime_str = f"`{days}d {hours}h {minutes}m {seconds}s`"
+        desc = (
+            f"{get_emoji('loading', guild)} **SYPHON SECURITY CONTINUOUS UPTIME**\n\n"
+            f"• ⏱️ **Live System Uptime:** {uptime_str}\n"
+            f"• 🌐 **VPS Server Node:** `Operational (Online)`\n"
+            f"• 🛡️ **Shield Status:** `100% Active & Guarding`"
+        )
+        embed = joyst_embed(description=desc, color=COLOR_SUCCESS, guild=guild)
+        
+        if isinstance(ctx_or_interaction, discord.Interaction):
+            await ctx_or_interaction.response.send_message(embed=embed)
+        else:
+            await ctx_or_interaction.send(embed=embed)
+
+    @commands.command(name="uptime")
+    async def prefix_uptime(self, ctx):
+        await self._do_uptime(ctx)
+
+    @app_commands.command(name="uptime", description="Check live bot continuous online uptime & server node health")
+    async def slash_uptime(self, interaction: discord.Interaction):
+        await self._do_uptime(interaction)
+
+    # --- BOTINFO COMMANDS ---
+    async def _do_botinfo(self, ctx_or_interaction):
+        guild = ctx_or_interaction.guild
+        proc = psutil.Process()
+        ram_mb = proc.memory_info().rss / (1024 * 1024)
+        cpu_pct = psutil.cpu_percent(interval=None)
+        
+        total_members = sum([(g.member_count or len(g.members) or 0) for g in self.bot.guilds])
+        guild_count = len(self.bot.guilds)
+        
+        start = getattr(self.bot, "start_time", time.time())
+        uptime_seconds = int(time.time() - start)
+        days = uptime_seconds // 86400
+        hours = (uptime_seconds % 86400) // 3600
+        minutes = (uptime_seconds % 3600) // 60
+        
+        ws_ping = round(self.bot.latency * 1000)
+
+        desc = (
+            f"{get_emoji('bot', guild)} **SYPHON SECURITY INFRASTRUCTURE HEALTH**\n\n"
+            f"• 📊 **Serving:** `{guild_count} Guilds` | `{total_members:,} Protected Users`\n"
+            f"• ⚡ **WebSocket Latency:** `{ws_ping} ms`\n"
+            f"• 💾 **RAM Allocation:** `{ram_mb:.1f} MB` | ⚙️ **CPU Load:** `{cpu_pct:.1f}%`\n"
+            f"• ⏱️ **Active Uptime:** `{days}d {hours}h {minutes}m`\n"
+            f"• 🐍 **Python Core:** `{platform.python_version()}` | **Discord.py:** `{discord.__version__}`\n"
+            f"• 🌐 **Host Node:** `Dedicated High-Speed VPS`"
+        )
+        embed = joyst_embed(description=desc, color=COLOR_PURPLE, guild=guild)
+        
+        if isinstance(ctx_or_interaction, discord.Interaction):
+            await ctx_or_interaction.response.send_message(embed=embed)
+        else:
+            await ctx_or_interaction.send(embed=embed)
+
+    @commands.command(name="botinfo", aliases=["binfo", "botstats"])
+    async def prefix_botinfo(self, ctx):
+        await self._do_botinfo(ctx)
+
+    @app_commands.command(name="botinfo", description="View bot system infrastructure health, RAM usage, CPU load & stats")
+    async def slash_botinfo(self, interaction: discord.Interaction):
+        await self._do_botinfo(interaction)
+
+    # --- SERVERINFO COMMANDS ---
+    async def _do_serverinfo(self, ctx_or_interaction):
+        guild = ctx_or_interaction.guild
+        created_ts = int(guild.created_at.timestamp())
+        
+        humans = sum(1 for m in guild.members if not m.bot) if guild.members else 0
+        bots = sum(1 for m in guild.members if m.bot) if guild.members else 0
+        total = guild.member_count or len(guild.members) or 0
+        
+        text_channels = len(guild.text_channels)
+        voice_channels = len(guild.voice_channels)
+        roles_count = len(guild.roles)
+        
+        boost_tier = guild.premium_tier
+        boost_count = guild.premium_subscription_count or 0
+
+        desc = (
+            f"{get_emoji('shield', guild)} **SERVER METRICS • {guild.name}**\n\n"
+            f"• 👑 **Server Owner:** {guild.owner.mention if guild.owner else 'Unknown'} (`{guild.owner_id}`)\n"
+            f"• 📆 **Created Date:** <t:{created_ts}:f> (<t:{created_ts}:R>)\n"
+            f"• 👥 **Members Breakdown:** `{total:,} Total` (`{humans:,}` Humans • `{bots:,}` Bots)\n"
+            f"• 📁 **Channels:** `{text_channels}` Text • `{voice_channels}` Voice (`{text_channels + voice_channels}` Total)\n"
+            f"• 🏷️ **Roles Count:** `{roles_count}` Roles\n"
+            f"• 💎 **Nitro Boosts:** Tier `{boost_tier}` (`{boost_count}` Boosts)\n"
+            f"• 🛡️ **Security Safeguards:** `100% Active & Guarding`"
+        )
+        icon_url = str(guild.icon.url) if guild.icon else None
+        embed = joyst_embed(description=desc, color=COLOR_INFO, thumbnail=icon_url, guild=guild)
+        
+        if isinstance(ctx_or_interaction, discord.Interaction):
+            await ctx_or_interaction.response.send_message(embed=embed)
+        else:
+            await ctx_or_interaction.send(embed=embed)
+
+    @commands.command(name="serverinfo", aliases=["sinfo", "guildinfo"])
+    async def prefix_serverinfo(self, ctx):
+        await self._do_serverinfo(ctx)
+
+    @app_commands.command(name="serverinfo", description="View detailed server metrics, owner, member breakdown & boost status")
+    async def slash_serverinfo(self, interaction: discord.Interaction):
+        await self._do_serverinfo(interaction)
 
 async def setup(bot):
     await bot.add_cog(SecurityCmd(bot))

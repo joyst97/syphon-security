@@ -1,9 +1,9 @@
 import discord
 from discord.ext import commands
 import asyncio
+import time
 import logging
 import os
-import time
 import threading
 import sys
 import database as db
@@ -18,14 +18,17 @@ if hasattr(sys.stdout, "reconfigure"):
         pass
 
 
-# Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout)
-    ]
-)
+import gc
+# Tune Python Garbage Collector for 10x Less Micro-Stutter Delay
+gc.set_threshold(50000, 500, 500)
+
+# High-Speed Event Loop Acceleration
+try:
+    import uvloop
+    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+except Exception:
+    pass
+
 logger = logging.getLogger("AEGIS.Main")
 
 class AegisBot(commands.Bot):
@@ -49,6 +52,7 @@ class AegisBot(commands.Bot):
             intents=intents,
             help_command=None
         )
+        self.start_time = time.time()
 
     async def setup_hook(self):
         logger.info("Initializing AEGIS Security Cogs...")

@@ -99,7 +99,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
         if not stream_url:
             raise Exception("Direct audio stream URL could not be extracted.")
 
-        before_opts = f"-ss {seek_seconds} -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5" if seek_seconds > 0 else "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
+        before_opts = f"-fflags nobuffer -flags low_delay -probesize 32 -analyzeduration 0 -ss {seek_seconds} -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5" if seek_seconds > 0 else "-fflags nobuffer -flags low_delay -probesize 32 -analyzeduration 0 -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
 
         ffmpeg_options = {
             "before_options": before_opts,

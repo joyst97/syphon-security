@@ -1,25 +1,26 @@
 import discord
 
-# Fallback Unicode Emojis
+# Custom Animated Discord Emojis Matrix
 DEFAULT_EMOJIS = {
-    "shield": "🛡️",
-    "success": "✅",
-    "cancel": "✖️",
-    "delete": "🧹",
-    "warning": "⚠️",
-    "danger": "🚨",
-    "ban": "🔨",
-    "timeout": "🔇",
-    "untimeout": "🔊",
-    "kick": "👢",
-    "purge": "🧹",
-    "verify": "🔒",
-    "loading": "⏳",
-    "bot": "🤖",
-    "question": "❓",
-    "info": "ℹ️",
-    "music": "🎵",
-    "bell": "🔔"
+    "shield": "<a:94046dev:1534236884639944705>",
+    "success": "<a:cb_greentick:1441097547350282260>",
+    "cancel": "<a:purge:1534236884639944705>",
+    "delete": "<a:purge:1534236884639944705>",
+    "warning": "<a:22593alert:1534236884639944705>",
+    "danger": "<a:22593alert:1534236884639944705>",
+    "ban": "<a:zzz_banned:1534236884639944705>",
+    "timeout": "<a:sw_timer:1534236884639944705>",
+    "untimeout": "<a:cb_greentick:1441097547350282260>",
+    "kick": "<a:zzz_banned:1534236884639944705>",
+    "purge": "<a:purge:1534236884639944705>",
+    "verify": "<a:94046dev:1534236884639944705>",
+    "loading": "<a:green_loading:1534236884639944705>",
+    "bot": "<a:bots:1534236884639944705>",
+    "question": "<a:question1:1534236884639944705>",
+    "info": "<a:rainymm_info:1534236884639944705>",
+    "music": "<a:1534236884639944705>",
+    "bell": "<a:campana:1534236884639944705>",
+    "bolt": "<a:green_loading:1534236884639944705>"
 }
 
 # Alias keywords mapped directly to your custom server emojis!

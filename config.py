@@ -21,17 +21,17 @@ WEB_PORT = int(os.getenv("PORT", 2003))
 SECRET_KEY = os.getenv("SECRET_KEY", "aegis-security-secret-key-2026")
 ADMIN_KEY = os.getenv("ADMIN_KEY", "admin123")
 
-COMMAND_PREFIXES = ["!", ".", ",", "aegis!"]
+COMMAND_PREFIXES = [","]
 
 # Database Path
 DB_PATH = os.path.join(os.path.dirname(__file__), "aegis_security.db")
 
-# Default Security Thresholds
-DEFAULT_ANTI_NUKE_LIMIT = 3       # Max actions within window before trigger
+# Default Security Thresholds (Ultra-Hardened Zero-Tolerance Mode)
+DEFAULT_ANTI_NUKE_LIMIT = 1       # Instant trigger on 1st unwhitelisted action
 DEFAULT_ANTI_NUKE_WINDOW = 10     # Seconds
-DEFAULT_ANTI_RAID_JOIN_LIMIT = 5  # Max joins within window
+DEFAULT_ANTI_RAID_JOIN_LIMIT = 3  # Trigger lockdown on 3 rapid joins
 DEFAULT_ANTI_RAID_WINDOW = 10     # Seconds
-DEFAULT_MAX_MENTIONS = 5          # Max user mentions in one message
-DEFAULT_MAX_WARNINGS_TIMEOUT = 3  # Warns before 1h timeout
-DEFAULT_MAX_WARNINGS_TEMPBAN = 5  # Warns before 7d tempban
-DEFAULT_MAX_WARNINGS_PERMBAN = 7  # Warns before perm ban
+DEFAULT_MAX_MENTIONS = 3          # Max user mentions in one message
+DEFAULT_MAX_WARNINGS_TIMEOUT = 2  # Warns before 1h timeout
+DEFAULT_MAX_WARNINGS_TEMPBAN = 4  # Warns before 7d tempban
+DEFAULT_MAX_WARNINGS_PERMBAN = 0  # Auto-Permban Disabled (Admin Manual Ban Only)

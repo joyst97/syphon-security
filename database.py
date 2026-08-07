@@ -6,8 +6,15 @@ from config import DB_PATH
 logger = logging.getLogger("AEGIS.Database")
 
 def get_connection():
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False, timeout=5.0)
     conn.row_factory = sqlite3.Row
+    try:
+        conn.execute("PRAGMA journal_mode = WAL;")
+        conn.execute("PRAGMA synchronous = NORMAL;")
+        conn.execute("PRAGMA temp_store = MEMORY;")
+        conn.execute("PRAGMA cache_size = -64000;")
+    except Exception:
+        pass
     return conn
 
 def init_db():
@@ -206,34 +213,44 @@ def get_247_vcs_db():
     conn.close()
     return [dict(r) for r in rows]
 
-# --- Settings Helpers ---
+# --- RAM Caches for Ultra-High Speed ---
+_SETTINGS_CACHE = {}
+_WHITELIST_CACHE = {}
 
 def get_guild_settings(guild_id: str):
+    gid = str(guild_id)
+    if gid in _SETTINGS_CACHE:
+        return _SETTINGS_CACHE[gid]
+
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM guild_settings WHERE guild_id = ?", (str(guild_id),))
+    cursor.execute("SELECT * FROM guild_settings WHERE guild_id = ?", (gid,))
     row = cursor.fetchone()
     if not row:
-        cursor.execute("INSERT INTO guild_settings (guild_id) VALUES (?)", (str(guild_id),))
+        cursor.execute("INSERT INTO guild_settings (guild_id) VALUES (?)", (gid,))
         conn.commit()
-        cursor.execute("SELECT * FROM guild_settings WHERE guild_id = ?", (str(guild_id),))
+        cursor.execute("SELECT * FROM guild_settings WHERE guild_id = ?", (gid,))
         row = cursor.fetchone()
     conn.close()
-    return dict(row)
+    result = dict(row)
+    _SETTINGS_CACHE[gid] = result
+    return result
 
 def update_guild_setting(guild_id: str, key: str, value):
+    gid = str(guild_id)
+    _SETTINGS_CACHE.pop(gid, None)
     conn = get_connection()
     cursor = conn.cursor()
-    # Ensure guild exists
-    get_guild_settings(guild_id)
+    get_guild_settings(gid)
     query = f"UPDATE guild_settings SET {key} = ? WHERE guild_id = ?"
-    cursor.execute(query, (value, str(guild_id)))
+    cursor.execute(query, (value, gid))
     conn.commit()
     conn.close()
 
 # --- Whitelist Helpers ---
 
 def add_whitelist(guild_id: str, target_id: str, target_type: str, feature: str = 'all', added_by: str = 'System'):
+    _WHITELIST_CACHE.pop(str(guild_id), None)
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -250,6 +267,7 @@ def add_whitelist(guild_id: str, target_id: str, target_type: str, feature: str 
         conn.close()
 
 def remove_whitelist(guild_id: str, target_id: str, feature: str = 'all'):
+    _WHITELIST_CACHE.pop(str(guild_id), None)
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM whitelists WHERE guild_id = ? AND target_id = ? AND feature = ?", 
@@ -260,41 +278,45 @@ def remove_whitelist(guild_id: str, target_id: str, feature: str = 'all'):
     return affected > 0
 
 def is_whitelisted(guild_id: str, target_id: str, feature: str = 'all', role_ids: list = None, channel_id: str = None):
+    gid = str(guild_id)
+    cache_key = (gid, str(target_id), feature, tuple(role_ids or []), str(channel_id or ""))
+    if gid in _WHITELIST_CACHE and cache_key in _WHITELIST_CACHE[gid]:
+        return _WHITELIST_CACHE[gid][cache_key]
+
     conn = get_connection()
     cursor = conn.cursor()
+    result = False
 
-    # Check user ID direct whitelist
     cursor.execute(
         "SELECT 1 FROM whitelists WHERE guild_id = ? AND target_id = ? AND (feature = 'all' OR feature = ?)",
-        (str(guild_id), str(target_id), feature)
+        (gid, str(target_id), feature)
     )
     if cursor.fetchone():
-        conn.close()
-        return True
+        result = True
 
-    # Check channel ID whitelist if provided
-    if channel_id:
+    if not result and channel_id:
         cursor.execute(
             "SELECT 1 FROM whitelists WHERE guild_id = ? AND target_id = ? AND (feature = 'all' OR feature = ?)",
-            (str(guild_id), str(channel_id), feature)
+            (gid, str(channel_id), feature)
         )
         if cursor.fetchone():
-            conn.close()
-            return True
+            result = True
 
-    # Check user roles if provided
-    if role_ids:
+    if not result and role_ids:
         for r_id in role_ids:
             cursor.execute(
                 "SELECT 1 FROM whitelists WHERE guild_id = ? AND target_id = ? AND (feature = 'all' OR feature = ?)",
-                (str(guild_id), str(r_id), feature)
+                (gid, str(r_id), feature)
             )
             if cursor.fetchone():
-                conn.close()
-                return True
+                result = True
+                break
 
     conn.close()
-    return False
+    if gid not in _WHITELIST_CACHE:
+        _WHITELIST_CACHE[gid] = {}
+    _WHITELIST_CACHE[gid][cache_key] = result
+    return result
 
 def get_whitelists(guild_id: str):
     conn = get_connection()
