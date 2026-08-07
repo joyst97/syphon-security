@@ -505,6 +505,22 @@ def get_bad_words(guild_id: str):
 
 # --- Ticket Helpers ---
 
+def add_ticket_db(guild_id: str, user_id: str, channel_id: str):
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "INSERT OR REPLACE INTO tickets (guild_id, user_id, channel_id, status) VALUES (?, ?, ?, 'open')",
+            (str(guild_id), str(user_id), str(channel_id))
+        )
+        conn.commit()
+        return True
+    except Exception as e:
+        logger.error(f"Error adding ticket: {e}")
+        return False
+    finally:
+        conn.close()
+
 def get_open_tickets(guild_id: str = None):
     conn = get_connection()
     cursor = conn.cursor()
