@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JOYST CORPORATION — Privacy Policy</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=2026_v999">
+</head>
+<body class="landing-body">
+    <canvas id="galaxyCanvas"></canvas>
+    
+    <header class="public-navbar glass">
+        <div class="nav-container">
+            <a href="/" class="brand-link">
+                <img src="/static/images/logo.png" alt="SYPHON SECURITY Logo" class="brand-logo-img">
+                <div class="brand-text">
+                    <h2>SYPHON <span>SECURITY</span></h2>
+                    <span class="brand-badge">CYBER SECURITY OS</span>
+                </div>
+            </a>
+            <nav class="public-menu">
+                <a href="/" class="nav-link"><i class="fa-solid fa-house"></i> Home</a>
+                <a href="/features" class="nav-link"><i class="fa-solid fa-cubes"></i> Features</a>
+                <a href="/login/discord" id="landingDashboardNavLink" class="nav-link"><i class="fa-brands fa-discord"></i> Login with Discord</a>
+                <a href="/privacy" class="nav-link active"><i class="fa-solid fa-shield-halved"></i> Privacy Policy</a>
+                <a href="/terms" class="nav-link"><i class="fa-solid fa-file-contract"></i> Terms</a>
+            </nav>
+            <div class="nav-cta">
+                <button class="btn-theme-toggle" id="themeToggleBtn" onclick="toggleDarkLightTheme()" title="Switch Light/Dark Theme" style="margin-right: 10px;">
+                    <i class="fa-solid fa-moon text-amber"></i>
+                </button>
+                <div id="landingUserBadge" style="display: none; align-items: center; gap: 8px; background: rgba(255,255,255,0.06); padding: 4px 12px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.15); margin-right: 10px;">
+                    <img id="landingUserAvatar" src="" style="width: 26px; height: 26px; border-radius: 50%;">
+                    <span id="landingUserName" style="font-weight: 600; font-size: 13px; color: #fff;"></span>
+                    <a href="/logout" style="color: #ef4444; font-size: 12px; margin-left: 6px; text-decoration: none;" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+                </div>
+                <a href="https://discord.com/oauth2/authorize?client_id=1534949562383339660&permissions=8&scope=bot%20applications.commands" target="_blank" class="btn btn-cyber">
+                    <i class="fa-brands fa-discord"></i> Add To Discord
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="page-container">
+        <div class="glass card-container legal-card">
+            <h1><i class="fa-solid fa-shield-halved text-cyan"></i> Privacy Policy</h1>
+            <p class="text-muted">Last Updated: August 4, 2026</p>
+            <hr class="legal-hr">
+
+            <h3>1. Data We Collect</h3>
+            <p>JOYST CORPORATION SECURITY BOT collects only essential data strictly necessary for security moderation and server protection:</p>
+            <ul>
+                <li>Guild (Server) IDs and Security Configuration Settings</li>
+                <li>User IDs for warning threshold tracking, tempban countdowns, and whitelist entries</li>
+                <li>Security Audit Incident Logs (Action records taken by moderators or automated filters)</li>
+            </ul>
+
+            <h3>2. Data Storage & Security</h3>
+            <p>All data is stored securely in an encrypted local database. Tempban countdown records are automatically deleted upon expiration. No personal user data or message content is stored permanently.</p>
+
+            <h3>3. Third-Party Data Sharing</h3>
+            <p>We do NOT share, sell, trade, or transfer collected Discord server data with third-party organizations or advertisers.</p>
+
+            <h3>4. User Data Removal</h3>
+            <p>Server owners may request immediate removal of their server's security settings or database logs at any time by contacting support.</p>
+        </div>
+    </main>
+
+    <footer class="public-footer">
+        <div class="footer-bottom">
+            <p>&copy; 2026 JOYST CORPORATION SERVICES. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script src="/static/js/app.js?v=2026_v999"></script>
+    <script src="/static/js/splashCursor.js?v=2026_v1"></script>
+</body>
+</html>

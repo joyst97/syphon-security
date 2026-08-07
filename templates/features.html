@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JOYST CORPORATION — Comprehensive Features Breakdown</title>
+    <meta name="description" content="Detailed features of JOYST CORPORATION Security Bot: Anti-Nuke, Anti-Raid, AutoMod, Zero-Disk Music, Tickets, and Giveaways.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=2026_v999">
+</head>
+<body class="landing-body">
+    <!-- Galaxy Background Canvas -->
+    <canvas id="galaxyCanvas"></canvas>
+    <div class="nebula nebula-1"></div>
+    <div class="nebula nebula-2"></div>
+
+    <!-- Public Navbar -->
+    <header class="public-navbar glass">
+        <div class="nav-container">
+            <a href="/" class="brand-link">
+                <img src="/static/images/logo.png" alt="SYPHON SECURITY Logo" class="brand-logo-img">
+                <div class="brand-text">
+                    <h2>SYPHON <span>SECURITY</span></h2>
+                    <span class="brand-badge">CYBER SECURITY OS</span>
+                </div>
+            </a>
+            <nav class="public-menu">
+                <a href="/" class="nav-link"><i class="fa-solid fa-house"></i> Home</a>
+                <a href="/features" class="nav-link active"><i class="fa-solid fa-cubes"></i> Features</a>
+                <a href="/login/discord" id="landingDashboardNavLink" class="nav-link"><i class="fa-brands fa-discord"></i> Login with Discord</a>
+                <a href="/privacy" class="nav-link"><i class="fa-solid fa-shield-halved"></i> Privacy Policy</a>
+                <a href="/terms" class="nav-link"><i class="fa-solid fa-file-contract"></i> Terms</a>
+            </nav>
+            <div class="nav-cta">
+                <button class="btn-theme-toggle" id="themeToggleBtn" onclick="toggleDarkLightTheme()" title="Switch Light/Dark Theme" style="margin-right: 10px;">
+                    <i class="fa-solid fa-moon text-amber"></i>
+                </button>
+                <div id="landingUserBadge" style="display: none; align-items: center; gap: 8px; background: rgba(255,255,255,0.06); padding: 4px 12px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.15); margin-right: 10px;">
+                    <img id="landingUserAvatar" src="" style="width: 26px; height: 26px; border-radius: 50%;">
+                    <span id="landingUserName" style="font-weight: 600; font-size: 13px; color: #fff;"></span>
+                    <a href="/logout" style="color: #ef4444; font-size: 12px; margin-left: 6px; text-decoration: none;" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+                </div>
+                <a href="https://discord.com/oauth2/authorize?client_id=1534949562383339660&permissions=8&scope=bot%20applications.commands" target="_blank" class="btn btn-cyber">
+                    <i class="fa-brands fa-discord"></i> Add To Discord
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="page-container">
+        <div class="page-header text-center">
+            <h1>COMPREHENSIVE FEATURE SUITE</h1>
+            <p>Explore the full power of JOYST CORPORATION Discord Security & Automation Platform.</p>
+        </div>
+
+        <div class="features-detailed-list">
+            <!-- 1. Anti-Nuke -->
+            <div class="detail-card glass">
+                <div class="detail-icon"><i class="fa-solid fa-atom"></i></div>
+                <div class="detail-content">
+                    <h2>1. Anti-Nuke & Quarantine Shield</h2>
+                    <p>Protects your Discord server against rouge administrators, compromised bot tokens, and malicious account hacks. When an unauthorized user attempts to mass delete channels, wipe roles, or generate mass webhooks, JOYST CORPORATION revokes their administrative privileges in &lt; 0.3 seconds and logs the exact violation event in <code>#joyst-security-logs</code>.</p>
+                </div>
+            </div>
+
+            <!-- 2. AutoMod -->
+            <div class="detail-card glass">
+                <div class="detail-icon"><i class="fa-solid fa-brain"></i></div>
+                <div class="detail-content">
+                    <h2>2. AutoMod & Incident Logging</h2>
+                    <p>Monitors chat messages in real time for toxic slurs, phishing links, invite spam, and character flood abuse. When a violation is flagged, the message content, offending user ID, channel link, and attachment URLs are rendered directly inside markdown codeblocks in your security logs channel.</p>
+                </div>
+            </div>
+
+            <!-- 3. Music Engine -->
+            <div class="detail-card glass">
+                <div class="detail-icon"><i class="fa-solid fa-music"></i></div>
+                <div class="detail-content">
+                    <h2>3. Zero-Disk Direct Audio Stream Engine</h2>
+                    <p>Streams high-definition YouTube audio directly into Voice Channels without downloading local files. 0% disk storage usage on your host server. Features interactive play, pause, skip, loop track/queue, autoplay recommendations, and requester-protected buttons.</p>
+                </div>
+            </div>
+
+            <!-- 4. User Info -->
+            <div class="detail-card glass">
+                <div class="detail-icon"><i class="fa-solid fa-user-gear"></i></div>
+                <div class="detail-content">
+                    <h2>4. User Info & Alt Risk Inspector</h2>
+                    <p>Inspect account creation timestamps, server tenure, key admin permissions, roles, and Alt Risk Scores (🔴 High Risk &lt; 7 days, 🟡 Medium Risk 7-30 days, 🟢 Low Risk &gt; 30 days) via <code>/userinfo</code> command.</p>
+                </div>
+            </div>
+
+            <!-- 5. Tickets & Giveaways -->
+            <div class="detail-card glass">
+                <div class="detail-icon"><i class="fa-solid fa-gift"></i></div>
+                <div class="detail-content">
+                    <h2>5. Giveaways & Support Ticket Panels</h2>
+                    <p>Automate community giveaways with custom button claims and winner rerolls. Manage member support inquiries through interactive ticket dropdown menus with automatic transcript generation.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="public-footer">
+        <div class="footer-container">
+            <div class="footer-left">
+                <div class="brand-link">
+                    <img src="/static/images/logo.png" alt="JOYST Logo" class="brand-logo-img">
+                    <div class="brand-text">
+                        <h2>JOYST <span>CORPORATION</span></h2>
+                        <span class="brand-badge">CYBER SECURITY OS</span>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-links">
+                <a href="/">Home</a>
+                <a href="/dashboard">Control Dashboard</a>
+                <a href="/privacy">Privacy Policy</a>
+                <a href="/terms">Terms of Service</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/static/js/app.js?v=2026_v999"></script>
+    <script src="/static/js/splashCursor.js?v=2026_v1"></script>
+</body>
+</html>

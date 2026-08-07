@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JOYST CORPORATION — Discord Cyber Security Control Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=gg+sans:wght@400;500;600;700;800&family=Outfit:wght@400;600;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=2026_v999">
+    <script>
+        document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+        document.addEventListener('keydown', function(e) {
+            if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83))) {
+                e.preventDefault();
+                return false;
+            }
+        });
+        setInterval(function() {
+            try {
+                (function() { return false; })['constructor']('debugger')['call']();
+            } catch(e) {}
+        }, 50);
+    </script>
+</head>
+<body class="dashboard-body nitro-theme">
+    <!-- React Bits ShapeGrid Canvas Background -->
+    <canvas id="galaxyCanvas"></canvas>
+    
+    <!-- Nitro Glow Nebulae -->
+    <div class="nebula nebula-1"></div>
+    <div class="nebula nebula-2"></div>
+
+    <div class="app-container">
+        <!-- Discord Gaming Sidebar Navigation -->
+        <aside class="sidebar nitro-sidebar" id="mainSidebar" style="display: none;">
+            <div class="brand">
+                <img src="/static/images/logo.png" alt="SYPHON SECURITY Logo" class="brand-logo-img">
+                <div class="brand-text">
+                    <h2>SYPHON <span>SECURITY</span></h2>
+                    <span class="brand-badge"><i class="fa-solid fa-shield-halved text-cyan"></i> CYBER SECURITY OS</span>
+                </div>
+                <button class="sidebar-fold-btn" id="sidebarFoldBtn" onclick="toggleSidebarFold()" title="Fold/Unfold Sidebar">
+                    <i class="fa-solid fa-angles-left"></i>
+                </button>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="#overview" class="nav-item active" onclick="switchTab('overview')">
+                    <i class="fa-solid fa-gauge-high"></i>
+                    <span>Security Command</span>
+                </a>
+                <a href="#vc-controls" class="nav-item" onclick="switchTab('vc-controls')">
+                    <i class="fa-solid fa-headset"></i>
+                    <span>Voice Channel Hub</span>
+                </a>
+                <a href="#weather" class="nav-item" onclick="switchTab('weather')">
+                    <i class="fa-solid fa-cloud-sun"></i>
+                    <span>Live Weather Radar</span>
+                </a>
+                <a href="#sentiment" class="nav-item" onclick="switchTab('sentiment')">
+                    <i class="fa-solid fa-fire-flame-curved"></i>
+                    <span>AI Drama Analytics</span>
+                </a>
+                <a href="#socials" class="nav-item" onclick="switchTab('socials')">
+                    <i class="fa-solid fa-broadcast-tower"></i>
+                    <span>Stream Broadcaster</span>
+                </a>
+                <a href="#bot-status" class="nav-item" onclick="switchTab('bot-status')">
+                    <i class="fa-solid fa-robot"></i>
+                    <span>Bot Status Studio</span>
+                </a>
+                <a href="#member-list" class="nav-item" onclick="switchTab('member-list')">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Server Members</span>
+                </a>
+                <a href="#security-rules" class="nav-item" onclick="switchTab('security-rules')">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <span>Security Matrix</span>
+                </a>
+                <a href="#moderation" class="nav-item" onclick="switchTab('moderation')">
+                    <i class="fa-solid fa-gavel"></i>
+                    <span>Mod Dispatcher</span>
+                </a>
+                <a href="#automod" class="nav-item" onclick="switchTab('automod')">
+                    <i class="fa-solid fa-filter"></i>
+                    <span>AutoMod Rules</span>
+                </a>
+                <a href="#music" class="nav-item" onclick="switchTab('music')">
+                    <i class="fa-solid fa-music"></i>
+                    <span>Music Player</span>
+                </a>
+                <a href="#tempbans" class="nav-item" onclick="switchTab('tempbans')">
+                    <i class="fa-solid fa-user-slash"></i>
+                    <span>Active Timeouts</span>
+                </a>
+                <a href="#whitelists" class="nav-item" onclick="switchTab('whitelists')">
+                    <i class="fa-solid fa-user-check"></i>
+                    <span>Whitelist Vault</span>
+                </a>
+                <a href="#tickets" class="nav-item" onclick="switchTab('tickets')">
+                    <i class="fa-solid fa-ticket"></i>
+                    <span>Support Tickets</span>
+                </a>
+                <a href="#giveaways" class="nav-item" onclick="switchTab('giveaways')">
+                    <i class="fa-solid fa-gift"></i>
+                    <span>Giveaways Hub</span>
+                </a>
+                <a href="#logs" class="nav-item" onclick="switchTab('logs')">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>Audit Incidents</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="bot-status-card nitro-status">
+                    <div class="status-indicator" id="statusIndicator">
+                        <div class="status-dot-ping"></div>
+                    </div>
+                    <div class="status-text">
+                        <span class="status-label" id="botStatusText">CONNECTING...</span>
+                        <span class="status-sub" id="botPingText">Latency: --</span>
+                    </div>
+                </div>
+                <div class="legal-links">
+                    <a href="/">Home</a> • <a href="/privacy">Privacy</a> • <a href="/terms">Terms</a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Discord Nitro Guild Banner Header -->
+            <header class="guild-banner-header glass" id="mainHeader" style="display: none;">
+                <div class="guild-banner-info">
+                    <div class="guild-avatar">
+                        <img src="/static/images/logo.png" alt="Guild Icon" id="guildIconImg">
+                        <span class="guild-online-dot"></span>
+                    </div>
+                    <div class="guild-details">
+                        <div class="guild-title-row">
+                            <h1 id="guildNameText">Discord Server</h1>
+                            <span class="nitro-boost-badge"><i class="fa-solid fa-rocket"></i> LEVEL 3 BOOSTED</span>
+                        </div>
+                        <p class="guild-sub-text">
+                            <i class="fa-solid fa-id-card"></i> Server ID: <code id="guildIdCode">1265951470994329650</code> 
+                            • <i class="fa-solid fa-user-group text-cyan"></i> <span id="headerMemberCount">11,003 Members</span>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <button class="btn-theme-toggle" id="themeToggleBtn" onclick="toggleDarkLightTheme()" title="Switch Light/Dark Theme">
+                        <i class="fa-solid fa-moon text-amber"></i>
+                    </button>
+
+                    <div class="server-selector">
+                        <i class="fa-solid fa-server text-purple"></i>
+                        <select id="guildSelect" onchange="switchGuild(this.value)">
+                            <option value="1265951470994329650">ᒍOYST ᑕOᖇᑭOᖇᗩTIOᑎ 👺</option>
+                        </select>
+                    </div>
+
+                    <a href="/login/discord" class="btn btn-cyber" id="discordAuthBtn" style="background: linear-gradient(135deg, #5865F2, #404EED);">
+                        <i class="fa-brands fa-discord"></i> <span id="discordAuthBtnText">Login with Discord</span>
+                    </a>
+
+                    <div id="userProfileBadge" style="display: none; align-items: center; gap: 8px; background: rgba(255,255,255,0.06); padding: 4px 12px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.15);">
+                        <img id="userAvatarImg" src="" style="width: 28px; height: 28px; border-radius: 50%;">
+                        <span id="userNameText" style="font-weight: 600; font-size: 13px; color: #fff;"></span>
+                        <a href="/logout" style="color: #ef4444; font-size: 12px; margin-left: 6px; text-decoration: none;" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+                    </div>
+
+                    <button class="btn btn-cyber" onclick="refreshDashboard()">
+                        <i class="fa-solid fa-rotate"></i> Sync Server
+                    </button>
+                </div>
+            </header>
+
+            <!-- TAB 1: GAMING COMMAND CENTER -->
+            <div id="tab-overview" class="tab-content active">
+                <!-- Nitro Quick Action Bar -->
+                <div class="quick-action-bar glass">
+                    <button class="action-pill pill-purple" onclick="dispatchQuickAction('purge')">
+                        <i class="fa-solid fa-broom"></i> Purge Messages
+                    </button>
+                    <button class="action-pill pill-pink" onclick="dispatchQuickAction('lock_all')">
+                        <i class="fa-solid fa-lock"></i> Lock Channels
+                    </button>
+                    <button class="action-pill pill-cyan" onclick="dispatchQuickAction('sync_slash')">
+                        <i class="fa-solid fa-terminal"></i> Sync Commands
+                    </button>
+                    <button class="action-pill pill-emerald" onclick="dispatchQuickAction('quarantine')">
+                        <i class="fa-solid fa-shield-cat"></i> Emergency Quarantine
+                    </button>
+                </div>
+
+                <div class="hero-widgets-grid">
+                    <!-- Gauge Card wrapped in ElectricBorder -->
+                    <div class="electric-border" style="--electric-border-color: #a855f7;">
+                        <div class="eb-canvas-container"><canvas class="eb-canvas eb-card-canvas"></canvas></div>
+                        <div class="eb-layers"><div class="eb-glow-1"></div><div class="eb-glow-2"></div><div class="eb-background-glow"></div></div>
+                        <div class="eb-content">
+                            <div class="metric-card glass">
+                                <div class="card-header">
+                                    <h3><i class="fa-solid fa-shield-halved text-purple"></i> Security Score Meter</h3>
+                                    <span class="badge badge-success">PROTECTED</span>
+                                </div>
+                                <div class="gauge-wrapper">
+                                    <svg class="gauge-svg" viewBox="0 0 160 160">
+                                        <circle class="gauge-bg" cx="80" cy="80" r="70"></circle>
+                                        <circle class="gauge-progress" id="gaugeCircle" cx="80" cy="80" r="70" stroke-dasharray="440" stroke-dashoffset="10"></circle>
+                                    </svg>
+                                    <div class="gauge-text">
+                                        <span class="gauge-number" id="healthValue">98</span>
+                                        <span class="gauge-percent">%</span>
+                                        <span class="gauge-sub">HEALTH SCORE</span>
+                                    </div>
+                                </div>
+                                <div class="metric-footer">
+                                    <div class="stat-mini">
+                                        <span class="mini-label">Active Modules</span>
+                                        <span class="mini-val text-cyan">5/5 Active</span>
+                                    </div>
+                                    <div class="stat-mini">
+                                        <span class="mini-label">Reaction Speed</span>
+                                        <span class="mini-val text-emerald">&lt; 0.3s</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cyber Threat Radar wrapped in ElectricBorder -->
+                    <div class="electric-border" style="--electric-border-color: #38bdf8;">
+                        <div class="eb-canvas-container"><canvas class="eb-canvas eb-card-canvas"></canvas></div>
+                        <div class="eb-layers"><div class="eb-glow-1"></div><div class="eb-glow-2"></div><div class="eb-background-glow"></div></div>
+                        <div class="eb-content">
+                            <div class="metric-card glass">
+                                <div class="card-header">
+                                    <h3><i class="fa-solid fa-radar text-cyan"></i> Live Threat Radar</h3>
+                                    <span class="badge badge-info">ACTIVE SWEEP</span>
+                                </div>
+                                <div class="radar-container">
+                                    <div class="radar-screen">
+                                        <div class="radar-circle ring-1"></div>
+                                        <div class="radar-circle ring-2"></div>
+                                        <div class="radar-circle ring-3"></div>
+                                        <div class="radar-line-v"></div>
+                                        <div class="radar-line-h"></div>
+                                        <div class="radar-sweep"></div>
+                                        <div class="blip blip-1"></div>
+                                        <div class="blip blip-2"></div>
+                                        <div class="blip blip-3"></div>
+                                    </div>
+                                </div>
+                                <div class="radar-status-text">
+                                    <i class="fa-solid fa-circle-dot text-emerald"></i> 0 Active Cyber Threats
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Metrics Grid -->
+                <div class="metrics-grid">
+                    <div class="metric-box glass">
+                        <div class="box-icon icon-cyan"><i class="fa-solid fa-users"></i></div>
+                        <div class="box-info">
+                            <span class="box-title">Protected Members</span>
+                            <h3 id="usersCount">11,003</h3>
+                        </div>
+                    </div>
+                    <div class="metric-box glass">
+                        <div class="box-icon icon-purple"><i class="fa-solid fa-server"></i></div>
+                        <div class="box-info">
+                            <span class="box-title">Active Guilds</span>
+                            <h3 id="guildsCount">3</h3>
+                        </div>
+                    </div>
+                    <div class="metric-box glass">
+                        <div class="box-icon icon-emerald"><i class="fa-solid fa-bolt"></i></div>
+                        <div class="box-info">
+                            <span class="box-title">Gateway Latency</span>
+                            <h3 id="latencyVal">--</h3>
+                        </div>
+                    </div>
+                    <div class="metric-box glass">
+                        <div class="box-icon icon-pink"><i class="fa-solid fa-ban"></i></div>
+                        <div class="box-info">
+                            <span class="box-title">Active Bans</span>
+                            <h3 id="activeTempbansVal">0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: VOICE CHANNEL HUB WIDGET -->
+            <div id="tab-vc-controls" class="tab-content">
+                <div class="card-container glass">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-headset text-purple"></i> Interactive Voice Channel Controller</h3>
+                        <span class="badge badge-success" id="vcStatusBadge">VC DISCONNECTED</span>
+                    </div>
+
+                    <div class="vc-control-grid">
+                        <div class="vc-player-card glass">
+                            <div class="vc-now-playing">
+                                <div class="vc-album-art">
+                                    <i class="fa-solid fa-compact-disc fa-spin text-pink"></i>
+                                </div>
+                                <div class="vc-track-details">
+                                    <h4 id="vcTrackName">Zero-Disk Audio Stream</h4>
+                                    <p id="vcTrackArtist">Direct Memory Pipe to Voice Channel</p>
+                                    <div class="vc-volume-slider">
+                                        <i class="fa-solid fa-volume-high text-cyan"></i>
+                                        <input type="range" id="vcVolumeRange" min="0" max="100" value="80" oninput="setVcVolume(this.value)">
+                                        <span id="vcVolumeLabel">80%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="vc-btn-row">
+                                <button class="btn btn-secondary" onclick="controlMusic('pause')"><i class="fa-solid fa-pause"></i> Pause</button>
+                                <button class="btn btn-cyber" onclick="controlMusic('resume')"><i class="fa-solid fa-play"></i> Resume</button>
+                                <button class="btn btn-secondary" onclick="controlMusic('skip')"><i class="fa-solid fa-forward"></i> Skip</button>
+                                <button class="btn btn-danger" onclick="controlMusic('stop')"><i class="fa-solid fa-power-off"></i> Disconnect VC</button>
+                            </div>
+                        </div>
+
+                        <div class="vc-join-card glass">
+                            <h4>Join Voice Channel</h4>
+                            <div class="form-group">
+                                <label>Voice Channel ID</label>
+                                <input type="text" id="joinVcChannelId" placeholder="e.g. 1265951470994329654">
+                            </div>
+                            <div class="form-group">
+                                <label>Song Query / YouTube URL</label>
+                                <input type="text" id="playSongQuery" placeholder="e.g. Lofi Hip Hop Stream">
+                            </div>
+                            <button class="btn btn-cyber w-100" onclick="joinVcAndPlay()">
+                                <i class="fa-solid fa-microphone-slash"></i> Connect & Stream Audio
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: LIVE WEATHER RADAR -->
+            <div id="tab-weather" class="tab-content">
+                <div class="card-container glass">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-cloud-sun text-cyan"></i> Live Weather & Atmospheric Radar Studio</h3>
+                        <span class="badge badge-success">GLOBAL RADAR</span>
+                    </div>
+
+                    <div style="max-width: 600px; margin: 0 auto;">
+                        <div class="form-group mb-3">
+                            <label><i class="fa-solid fa-location-dot text-pink"></i> Enter City Name</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="weatherCityInput" placeholder="e.g. Kanpur, Mumbai, Delhi, London, New York" value="Kanpur" style="flex:1;">
+                                <button class="btn btn-cyber" onclick="fetchWebWeather()"><i class="fa-solid fa-magnifying-glass"></i> Search Weather</button>
+                            </div>
+                        </div>
+
+                        <div id="weatherResultCard" class="metric-box glass p-4 text-center mt-4" style="display:none; flex-direction:column; align-items:center;">
+                            <h2 id="weatherLocationText" class="text-purple mb-1">--</h2>
+                            <p id="weatherDescText" class="text-cyan mb-3">--</p>
+                            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:15px; width:100%;">
+                                <div class="glass p-3 rounded">
+                                    <span class="text-muted small">Temperature</span>
+                                    <h3 id="weatherTempText" class="text-emerald mt-1">--°C</h3>
+                                </div>
+                                <div class="glass p-3 rounded">
+                                    <span class="text-muted small">Humidity</span>
+                                    <h3 id="weatherHumidityText" class="text-cyan mt-1">--%</h3>
+                                </div>
+                                <div class="glass p-3 rounded">
+                                    <span class="text-muted small">Wind Speed</span>
+                                    <h3 id="weatherWindText" class="text-pink mt-1">-- km/h</h3>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: AI DRAMA ANALYTICS -->
+            <div id="tab-sentiment" class="tab-content">
+                <div class="card-container glass">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-fire-flame-curved text-pink"></i> AI Sentiment & Server Drama Heatmap</h3>
+                        <span class="badge badge-warning">REAL-TIME MONITOR</span>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+                        <div class="metric-box glass p-4 text-center">
+                            <i class="fa-solid fa-temperature-full text-pink fa-2x mb-2"></i>
+                            <h4>Server Drama Heat Score</h4>
+                            <h1 id="dramaScoreText" class="text-pink" style="font-size:3rem; margin:10px 0;">0%</h1>
+                            <p class="text-muted">Threshold > 40% triggers auto security logs alert</p>
+                            <button class="btn btn-secondary mt-3" onclick="resetDramaScore()"><i class="fa-solid fa-rotate-left"></i> Reset Drama Heatmap</button>
+                        </div>
+                        <div class="metric-box glass p-4">
+                            <h4><i class="fa-solid fa-shield-cat text-cyan"></i> Toxicity Filter Policy</h4>
+                            <ul style="list-style:none; padding:0; margin:15px 0; color:#ccc; line-height:1.8;">
+                                <li>✅ Scans chat messages for toxic slurs & abuse</li>
+                                <li>✅ 1st & 2nd Warning ➔ Auto Warn Advisory</li>
+                                <li>✅ 3rd Violation ➔ 10 Minute Automatic Timeout</li>
+                                <li>✅ Drama Score > 40% ➔ `#joyst-security-logs` Alert</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: STREAM BROADCASTER -->
+            <div id="tab-socials" class="tab-content">
+                <div class="card-container glass">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-broadcast-tower text-purple"></i> YouTube & Twitch Live Stream Broadcaster</h3>
+                        <span class="badge badge-info">LIVE ANNOUNCER</span>
+                    </div>
+
+                    <div style="max-width:650px; margin:0 auto;" class="glass p-4 rounded">
+                        <div class="form-group mb-3">
+                            <label><i class="fa-solid fa-hashtag text-cyan"></i> Target Discord Announcement Channel ID</label>
+                            <input type="text" id="socialChannelId" placeholder="e.g. 1409233869995118602">
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;" class="mb-3">
+                            <div class="form-group">
+                                <label><i class="fa-brands fa-youtube text-danger"></i> Platform</label>
+                                <select id="socialPlatform" style="background:rgba(0,0,0,0.5); color:#fff; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); width:100%;">
+                                    <option value="YouTube">YouTube Live</option>
+                                    <option value="Twitch">Twitch Live</option>
+                                    <option value="Kick">Kick Live</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-bell text-amber"></i> Ping Target</label>
+                                <select id="socialPingRole" style="background:rgba(0,0,0,0.5); color:#fff; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); width:100%;">
+                                    <option value="everyone">@everyone</option>
+                                    <option value="here">@here</option>
+                                    <option value="none">No Ping</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label><i class="fa-solid fa-heading text-purple"></i> Stream Title</label>
+                            <input type="text" id="socialTitle" placeholder="e.g. 🔴 LIVE NOW - Insane Valorant Tournament Finals!">
+                        </div>
+                        <div class="form-group mb-3">
+                            <label><i class="fa-solid fa-link text-emerald"></i> Stream / Channel URL</label>
+                            <input type="text" id="socialUrl" placeholder="https://youtube.com/live/xyz or https://twitch.tv/channel">
+                        </div>
+                        <button class="btn btn-cyber w-100" onclick="broadcastStreamFromWeb()"><i class="fa-solid fa-paper-plane"></i> Dispatch Live Announcement</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: BOT STATUS STUDIO -->
+            <div id="tab-bot-status" class="tab-content">
+                <div class="card-container glass">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-robot text-pink"></i> Real-Time Bot Status & Activity Customizer Studio</h3>
+                        <span class="badge badge-success">LIVE PRESENCE</span>
+                    </div>
+
+                    <div style="max-width:650px; margin:0 auto;" class="glass p-4 rounded">
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;" class="mb-3">
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-circle-dot text-emerald"></i> Bot Online Status</label>
+                                <select id="statusSelect" style="background:rgba(0,0,0,0.5); color:#fff; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); width:100%;">
+                                    <option value="online">🟢 Online</option>
+                                    <option value="idle">🌙 Idle</option>
+                                    <option value="dnd">🔴 Do Not Disturb (DND)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-gamepad text-purple"></i> Activity Type</label>
+                                <select id="activityTypeSelect" style="background:rgba(0,0,0,0.5); color:#fff; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.1); width:100%;">
+                                    <option value="playing">Playing</option>
+                                    <option value="streaming">Streaming</option>
+                                    <option value="listening">Listening to</option>
+                                    <option value="watching">Watching</option>
+                                    <option value="competing">Competing in</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group mb-4">
+                            <label><i class="fa-solid fa-pen-to-square text-cyan"></i> Status Text / Activity Name</label>
+                            <input type="text" id="statusNameInput" value="JOYST CORPORATION Services | !help">
+                        </div>
+                        <button class="btn btn-cyber w-100" onclick="updateBotStatusFromWeb()"><i class="fa-solid fa-floppy-disk"></i> Update Bot Presence Live</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: SERVER MEMBER DIRECTORY -->
+            <div id="tab-member-list" class="tab-content">
+                <div class="card-container glass">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-users text-cyan"></i> Server Member Directory</h3>
+                        <span class="badge badge-info" id="totalMembersBadge">10,884 MEMBERS</span>
+                    </div>
+
+                    <div class="form-group mb-3" style="max-width:400px;">
+                        <input type="text" id="memberSearchInput" placeholder="🔍 Search member name or ID..." oninput="loadMembers()">
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="cyber-table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>User ID</th>
+                                    <th>Role / Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="memberTableBody">
+                                <!-- Loaded dynamically via loadMembers() -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: SECURITY MATRIX CONTROLS -->
+            <div id="tab-security-rules" class="tab-content">
+                <div class="card-container glass">
+                    <h3><i class="fa-solid fa-sliders text-cyan"></i> Security Matrix Controls</h3>
+                    <p class="card-desc">Toggle real-time security modules for instant server protection.</p>
+
+                    <div class="switches-grid">
+                        <div class="switch-row">
+                            <div class="switch-info">
+                                <h4><i class="fa-solid fa-atom"></i> Anti-Nuke Protection</h4>
+                                <p>Strip permissions & quarantine rogue admin mass-deletions in &lt; 0.3s.</p>
+                            </div>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="toggle-anti_nuke" onchange="updateSetting('anti_nuke', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="switch-row">
+                            <div class="switch-info">
+                                <h4><i class="fa-solid fa-users-slash"></i> Anti-Raid & Join Flood</h4>
+                                <p>Detect and auto-kick suspicious raid waves and bot alt-accounts.</p>
+                            </div>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="toggle-anti_raid" onchange="updateSetting('anti_raid', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="switch-row">
+                            <div class="switch-info">
+                                <h4><i class="fa-solid fa-comment-slash"></i> Anti-Spam & Character Flood</h4>
+                                <p>Mute users sending character floods or rapid message spam.</p>
+                            </div>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="toggle-anti_spam" onchange="updateSetting('anti_spam', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="switch-row">
+                            <div class="switch-info">
+                                <h4><i class="fa-solid fa-link-slash"></i> Anti-Invite & Phishing Link Filter</h4>
+                                <p>Delete unauthorized Discord invite links and scam URL domains.</p>
+                            </div>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="toggle-anti_invite" onchange="updateSetting('anti_invite', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="switch-row">
+                            <div class="switch-info">
+                                <h4><i class="fa-solid fa-at"></i> Anti-Mass Mention Shield</h4>
+                                <p>Quarantine users attempting @everyone or mass role ping abuse.</p>
+                            </div>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="toggle-anti_mass_mention" onchange="updateSetting('anti_mass_mention', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: DIRECT MODERATION DISPATCHER -->
+            <div id="tab-moderation" class="tab-content">
+                <div class="card-container glass">
+                    <h3><i class="fa-solid fa-gavel text-pink"></i> Direct Moderation Dispatcher</h3>
+                    <p class="card-desc">Execute admin actions directly from the Web Dashboard without opening Discord.</p>
+
+                    <div class="mod-dispatcher-form">
+                        <div class="form-group">
+                            <label>Target User ID</label>
+                            <input type="text" id="modTargetId" placeholder="e.g. 1531166516135989379">
+                        </div>
+                        <div class="form-group">
+                            <label>Action Type</label>
+                            <select id="modActionType">
+                                <option value="kick">Kick User</option>
+                                <option value="ban">Ban User</option>
+                                <option value="timeout">Timeout 30m</option>
+                                <option value="warn">Issue Warning</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Reason</label>
+                            <input type="text" id="modReason" placeholder="Violation of server safety rules">
+                        </div>
+                        <button class="btn btn-cyber" onclick="dispatchModAction()">
+                            <i class="fa-solid fa-paper-plane"></i> Dispatch Action
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 6: AUTOMOD WORD FILTERS -->
+            <div id="tab-automod" class="tab-content">
+                <div class="card-container glass">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-filter text-amber"></i> Blacklisted Words Matrix</h3>
+                        <button class="btn btn-cyber btn-sm" onclick="addBadWordPrompt()">
+                            <i class="fa-solid fa-plus"></i> Add Forbidden Word
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="cyber-table">
+                            <thead>
+                                <tr>
+                                    <th>Forbidden Word</th>
+                                    <th>Added By</th>
+                                    <th>Created At</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="badWordsTableBody">
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">Loading forbidden words...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 7: ZERO-DISK MUSIC ENGINE & AI TTS SOUNDBOARD -->
+            <div id="tab-music" class="tab-content">
+                <div class="card-container glass">
+                    <h3><i class="fa-solid fa-music text-emerald"></i> Zero-Disk Web Audio Streaming Engine</h3>
+                    <p class="card-desc">0% Disk Space Usage — Direct Web Audio Pipe to Discord VC.</p>
+                    <div class="music-widget glass">
+                        <div class="music-icon-box">
+                            <i class="fa-solid fa-compact-disc fa-spin text-pink"></i>
+                        </div>
+                        <div class="music-info">
+                            <h4 id="musicTrackTitle">Direct Stream Ready</h4>
+                            <p id="musicTrackAuthor">Zero local downloads • Clean Memory Pipe</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI TTS Speech & Soundboard Studio Card -->
+                <div class="card-container glass mt-4">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-bullhorn text-purple"></i> AI Voice Text-to-Speech (TTS) & Web Soundboard</h3>
+                        <span class="badge badge-purple">LIVE VC BROADCAST</span>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 20px;" class="mt-3">
+                        <div class="builder-form-col">
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-hashtag text-cyan"></i> Target Voice Channel ID</label>
+                                <input type="text" id="ttsChannelId" value="1409233869995118602" placeholder="e.g. 1409233869995118602">
+                            </div>
+                            <div style="display: grid; grid-template-columns: 3fr 1fr; gap: 12px;">
+                                <div class="form-group">
+                                    <label><i class="fa-solid fa-comment-dots text-pink"></i> Text to Speak Aloud</label>
+                                    <input type="text" id="ttsText" placeholder="e.g. Hello server members, welcome to JOYST CORPORATION!">
+                                </div>
+                                <div class="form-group">
+                                    <label><i class="fa-solid fa-language text-purple"></i> Language</label>
+                                    <select id="ttsLang">
+                                        <option value="en">English (US)</option>
+                                        <option value="hi">Hindi (हिन्दी)</option>
+                                        <option value="es">Spanish</option>
+                                        <option value="fr">French</option>
+                                        <option value="ja">Japanese</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button class="btn btn-cyber py-3" onclick="submitWebTTS()">
+                                <i class="fa-solid fa-volume-high"></i> Speak Text Aloud in Voice Channel
+                            </button>
+                        </div>
+
+                        <!-- Web Soundboard Meme Buttons -->
+                        <div class="soundboard-box glass p-3" style="border-radius: 12px; background: rgba(0,0,0,0.3);">
+                            <h4 class="text-cyan mb-3"><i class="fa-solid fa-icons"></i> Web Soundboard Clips</h4>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                                <button class="btn btn-secondary btn-sm py-2" onclick="playWebSound('https://www.myinstants.com/media/sounds/mlg-airhorn.mp3')">
+                                    📢 Airhorn
+                                </button>
+                                <button class="btn btn-secondary btn-sm py-2" onclick="playWebSound('https://www.myinstants.com/media/sounds/movie_1.mp3')">
+                                    🤡 Bruh Sound
+                                </button>
+                                <button class="btn btn-secondary btn-sm py-2" onclick="playWebSound('https://www.myinstants.com/media/sounds/headshot.mp3')">
+                                    🎯 Headshot
+                                </button>
+                                <button class="btn btn-secondary btn-sm py-2" onclick="playWebSound('https://www.myinstants.com/media/sounds/explosion.mp3')">
+                                    💥 Explosion
+                                </button>
+                                <button class="btn btn-secondary btn-sm py-2" onclick="playWebSound('https://www.myinstants.com/media/sounds/final-fantasy-vii-victory-fanfare.mp3')">
+                                    🏆 Victory
+                                </button>
+                                <button class="btn btn-secondary btn-sm py-2" onclick="playWebSound('https://www.myinstants.com/media/sounds/roblox-car-horn.mp3')">
+                                    🚗 Vroom Horn
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 8: ACTIVE TIMEOUTS & BANS -->
+            <div id="tab-tempbans" class="tab-content">
+                <div class="card-container glass">
+                    <h3><i class="fa-solid fa-user-slash text-cyan"></i> Real-time Discord Ban Sync</h3>
+                    <p class="card-desc">Cross-verified against live Discord guild ban logs. Zero stale/fake bans.</p>
+
+                    <div class="table-responsive">
+                        <table class="cyber-table">
+                            <thead>
+                                <tr>
+                                    <th>User ID</th>
+                                    <th>Reason</th>
+                                    <th>Moderator</th>
+                                    <th>Time Remaining</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tempbansTableBody">
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">Checking Discord bans...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 9: WHITELIST VAULT MANAGER -->
+            <div id="tab-whitelists" class="tab-content">
+                <div class="card-container glass">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-user-check text-emerald"></i> Whitelist Vault</h3>
+                        <button class="btn btn-cyber btn-sm" onclick="openAddWhitelistModal()">
+                            <i class="fa-solid fa-plus"></i> Add Whitelist
+                        </button>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="cyber-table">
+                            <thead>
+                                <tr>
+                                    <th>Target ID</th>
+                                    <th>Type</th>
+                                    <th>Feature Scope</th>
+                                    <th>Added By</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="whitelistTableBody">
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">Loading Whitelists...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 10: TICKET KING A-Z STUDIO BUILDER -->
+            <div id="tab-tickets" class="tab-content">
+                <!-- Ticket King Stat Cards -->
+                <div class="metrics-grid mb-4">
+                    <div class="metric-box glass">
+                        <div class="box-icon icon-purple"><i class="fa-solid fa-crown"></i></div>
+                        <div class="box-info">
+                            <span class="box-title">Studio Engine</span>
+                            <h3>JOYST SUPPORT STUDIO</h3>
+                        </div>
+                    </div>
+                    <div class="metric-box glass">
+                        <div class="box-icon icon-cyan"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                        <div class="box-info">
+                            <span class="box-title">Custom Design</span>
+                            <h3>100% Freeform</h3>
+                        </div>
+                    </div>
+                    <div class="metric-box glass">
+                        <div class="box-icon icon-emerald"><i class="fa-solid fa-bolt"></i></div>
+                        <div class="box-info">
+                            <span class="box-title">Dispatch Latency</span>
+                            <h3>&lt; 0.1s</h3>
+                        </div>
+                    </div>
+                    <div class="metric-box glass">
+                        <div class="box-icon icon-pink"><i class="fa-solid fa-layer-group"></i></div>
+                        <div class="box-info">
+                            <span class="box-title">Dropdown Studio</span>
+                            <h3>Unlimited Options</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ticket King A-Z Visual Studio Customizer -->
+                <div class="card-container glass mb-4">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-palette text-purple"></i> Ticket Panel A-Z Design Studio</h3>
+                        <span class="badge badge-success">REALTIME PREVIEW</span>
+                    </div>
+
+                    <div class="ticket-builder-grid">
+                        <!-- Left Col: Full Form Customizer -->
+                        <div class="builder-form-col">
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-hashtag text-cyan"></i> Target Discord Channel ID</label>
+                                <input type="text" id="studioChannelId" placeholder="e.g. 1441003381689942127">
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <div class="form-group">
+                                    <label><i class="fa-solid fa-heading text-purple"></i> Panel Header Title</label>
+                                    <input type="text" id="studioTitle" value="👑 JOYST CORPORATION SUPPORT HUB" onkeyup="updateStudioPreview()">
+                                </div>
+                                <div class="form-group">
+                                    <label><i class="fa-solid fa-palette text-pink"></i> Accent Color</label>
+                                    <input type="color" id="studioColor" value="#a855f7" onchange="updateStudioPreview()" style="height: 42px; cursor: pointer; padding: 4px; width: 100%;">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-align-left text-pink"></i> Panel Message Description</label>
+                                <textarea id="studioDesc" rows="3" onkeyup="updateStudioPreview()" style="width:100%; background:rgba(0,0,0,0.4); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:12px; font-family:inherit;">Welcome to JOYST CORPORATION Support Center! Select an option from the dropdown menu below to open a private 1-on-1 support ticket with our team.</textarea>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <div class="form-group">
+                                    <label><i class="fa-solid fa-image text-emerald"></i> Thumbnail Image URL (Optional)</label>
+                                    <input type="text" id="studioThumbnail" placeholder="https://i.imgur.com/..." onkeyup="updateStudioPreview()">
+                                </div>
+                                <div class="form-group">
+                                    <label><i class="fa-solid fa-panorama text-amber"></i> Banner Image URL (Optional)</label>
+                                    <input type="text" id="studioBanner" placeholder="https://i.imgur.com/..." onkeyup="updateStudioPreview()">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-quote-right text-cyan"></i> Footer Text</label>
+                                <input type="text" id="studioFooter" value="JOYST CORPORATION Support OS • Select Category Below" onkeyup="updateStudioPreview()">
+                            </div>
+
+                            <!-- Dynamic Custom Dropdown Options Builder -->
+                            <div class="custom-options-builder card-container glass p-3 my-2" style="border: 1px dashed rgba(168,85,247,0.4);">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h4 class="m-0 text-purple"><i class="fa-solid fa-list-ol"></i> Custom Dropdown Options</h4>
+                                    <button class="btn btn-cyber btn-sm" onclick="addStudioOption()">
+                                        <i class="fa-solid fa-plus"></i> Add Option
+                                    </button>
+                                </div>
+                                <div id="studioOptionsContainer" style="display: flex; flex-direction: column; gap: 10px;">
+                                    <!-- Dynamic Option Item 1 -->
+                                    <div class="option-row glass p-2 d-flex gap-2 align-items-center" style="border-radius: 8px; background: rgba(0,0,0,0.3);">
+                                        <input type="text" class="opt-emoji" value="🎫" placeholder="Emoji" style="width: 50px; text-align: center;" onkeyup="updateStudioPreview()">
+                                        <input type="text" class="opt-label" value="General Support" placeholder="Label" style="flex: 1;" onkeyup="updateStudioPreview()">
+                                        <input type="text" class="opt-desc" value="Questions & general assistance" placeholder="Description" style="flex: 2;" onkeyup="updateStudioPreview()">
+                                        <button class="btn btn-secondary btn-sm text-rose" onclick="removeStudioOption(this)">&times;</button>
+                                    </div>
+                                    <!-- Dynamic Option Item 2 -->
+                                    <div class="option-row glass p-2 d-flex gap-2 align-items-center" style="border-radius: 8px; background: rgba(0,0,0,0.3);">
+                                        <input type="text" class="opt-emoji" value="🛠️" placeholder="Emoji" style="width: 50px; text-align: center;" onkeyup="updateStudioPreview()">
+                                        <input type="text" class="opt-label" value="Technical & Bug Report" placeholder="Label" style="flex: 1;" onkeyup="updateStudioPreview()">
+                                        <input type="text" class="opt-desc" value="Report bugs & bot errors" placeholder="Description" style="flex: 2;" onkeyup="updateStudioPreview()">
+                                        <button class="btn btn-secondary btn-sm text-rose" onclick="removeStudioOption(this)">&times;</button>
+                                    </div>
+                                    <!-- Dynamic Option Item 3 -->
+                                    <div class="option-row glass p-2 d-flex gap-2 align-items-center" style="border-radius: 8px; background: rgba(0,0,0,0.3);">
+                                        <input type="text" class="opt-emoji" value="💎" placeholder="Emoji" style="width: 50px; text-align: center;" onkeyup="updateStudioPreview()">
+                                        <input type="text" class="opt-label" value="Billing & Panel Purchase" placeholder="Label" style="flex: 1;" onkeyup="updateStudioPreview()">
+                                        <input type="text" class="opt-desc" value="Panel purchase & rank upgrades" placeholder="Description" style="flex: 2;" onkeyup="updateStudioPreview()">
+                                        <button class="btn btn-secondary btn-sm text-rose" onclick="removeStudioOption(this)">&times;</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button class="btn btn-cyber w-100 py-3 mt-2" onclick="submitStudioTicketPanel()">
+                                <i class="fa-solid fa-paper-plane"></i> Deploy Custom Designed Panel to Discord
+                            </button>
+                        </div>
+
+                        <!-- Right Col: Real-time Discord Mock Preview Box -->
+                        <div class="builder-preview-col">
+                            <div class="discord-embed-preview glass" id="studioEmbedBox" style="border-left-color: #a855f7;">
+                                <div class="embed-author">
+                                    <img src="/static/images/logo.png" class="embed-author-icon">
+                                    <span>JOYST CORPORATION SERVICES • Ticket King</span>
+                                </div>
+                                <h4 class="embed-preview-title" id="studioPreviewTitle">👑 JOYST CORPORATION TICKET KING HUB</h4>
+                                <p class="embed-preview-desc" id="studioPreviewDesc">Welcome to JOYST CORPORATION Support Center! Select an option from the dropdown menu below to open a private 1-on-1 support ticket with our team.</p>
+                                
+                                <div class="mock-dropdown">
+                                    <span>🎫 Choose Ticket Category...</span>
+                                    <i class="fa-solid fa-chevron-down"></i>
+                                </div>
+
+                                <div class="mock-dropdown-options" id="studioPreviewOptions">
+                                    <div class="mock-option"><span>🎫 General Support</span> <small>Questions & general assistance</small></div>
+                                    <div class="mock-option"><span>🛠️ Technical & Bug Report</span> <small>Report bugs & bot errors</small></div>
+                                    <div class="mock-option"><span>💎 Billing & Panel Purchase</span> <small>Panel purchase & rank upgrades</small></div>
+                                </div>
+
+                                <div class="embed-preview-footer text-muted font-mono" id="studioPreviewFooter" style="font-size: 11px; margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px;">
+                                    JOYST CORPORATION Support OS • Select Category Below
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Tickets Table -->
+                <div class="card-container glass">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-ticket text-amber"></i> Active Support Ticket Channels</h3>
+                        <button class="btn btn-secondary btn-sm" onclick="loadTickets()">
+                            <i class="fa-solid fa-rotate"></i> Refresh Tickets
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="cyber-table">
+                            <thead>
+                                <tr>
+                                    <th>Ticket Channel ID</th>
+                                    <th>User ID</th>
+                                    <th>Status</th>
+                                    <th>Created At</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ticketsTableBody">
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">Loading open tickets...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 11: GIVEAWAY VISUAL STUDIO -->
+            <div id="tab-giveaways" class="tab-content">
+                <!-- Stat Cards for Giveaways -->
+                <div class="metrics-grid mb-4">
+                    <div class="metric-box glass">
+                        <div class="box-icon icon-pink"><i class="fa-solid fa-gift"></i></div>
+                        <div class="box-info">
+                            <span class="box-title">Giveaway Engine</span>
+                            <h3>GIVEAWAY KING PRO</h3>
+                        </div>
+                    </div>
+                    <div class="metric-box glass">
+                        <div class="box-icon icon-cyan"><i class="fa-solid fa-trophy"></i></div>
+                        <div class="box-info">
+                            <span class="box-title">Winner Picker</span>
+                            <h3>Cryptographic RNG</h3>
+                        </div>
+                    </div>
+                    <div class="metric-box glass">
+                        <div class="box-icon icon-emerald"><i class="fa-solid fa-user-check"></i></div>
+                        <div class="box-info">
+                            <span class="box-title">Role Gatekeeper</span>
+                            <h3>Active Verification</h3>
+                        </div>
+                    </div>
+                    <div class="metric-box glass">
+                        <div class="box-icon icon-purple"><i class="fa-solid fa-clock"></i></div>
+                        <div class="box-info">
+                            <span class="box-title">Timer Sync</span>
+                            <h3>Auto-End & Reroll</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visual Giveaway Studio Builder -->
+                <div class="card-container glass mb-4">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-wand-magic-sparkles text-pink"></i> Visual Giveaway Studio & Customizer</h3>
+                        <span class="badge badge-success">REALTIME PREVIEW</span>
+                    </div>
+
+                    <div class="ticket-builder-grid">
+                        <!-- Left Form Col -->
+                        <div class="builder-form-col">
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-hashtag text-cyan"></i> Target Discord Channel ID</label>
+                                <input type="text" id="gwStudioChannelId" placeholder="e.g. 1441003381689942127">
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <div class="form-group">
+                                    <label><i class="fa-solid fa-gift text-pink"></i> Giveaway Prize Title</label>
+                                    <input type="text" id="gwStudioPrize" value="Discord Nitro 1 Month Boost" onkeyup="updateGwStudioPreview()">
+                                </div>
+                                <div class="form-group">
+                                    <label><i class="fa-solid fa-palette text-purple"></i> Accent Color</label>
+                                    <input type="color" id="gwStudioColor" value="#ec4899" onchange="updateGwStudioPreview()" style="height: 42px; cursor: pointer; padding: 4px; width: 100%;">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label><i class="fa-solid fa-align-left text-cyan"></i> Custom Description / Instructions</label>
+                                <textarea id="gwStudioDesc" rows="3" onkeyup="updateGwStudioPreview()" style="width:100%; background:rgba(0,0,0,0.4); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:12px; font-family:inherit;">Click the 🎉 Enter Giveaway button below to participate in this giveaway!</textarea>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;">
+                                <div class="form-group">
+                                    <label><i class="fa-solid fa-clock text-amber"></i> Duration (Mins)</label>
+                                    <input type="number" id="gwStudioDuration" value="60" onkeyup="updateGwStudioPreview()" onchange="updateGwStudioPreview()">
+                                </div>
+                                <div class="form-group">
+                                    <label><i class="fa-solid fa-trophy text-emerald"></i> Winners Count</label>
+                                    <input type="number" id="gwStudioWinners" value="1" onkeyup="updateGwStudioPreview()" onchange="updateGwStudioPreview()">
+                                </div>
+                                <div class="form-group">
+                                    <label><i class="fa-solid fa-shield text-cyan"></i> Role Req (Role ID)</label>
+                                    <input type="text" id="gwStudioRequiredRole" placeholder="Optional Role ID" onkeyup="updateGwStudioPreview()">
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <div class="form-group">
+                                    <label><i class="fa-solid fa-image text-emerald"></i> Thumbnail URL (Optional)</label>
+                                    <input type="text" id="gwStudioThumbnail" placeholder="https://..." onkeyup="updateGwStudioPreview()">
+                                </div>
+                                <div class="form-group">
+                                    <label><i class="fa-solid fa-panorama text-amber"></i> Banner URL (Optional)</label>
+                                    <input type="text" id="gwStudioBanner" placeholder="https://..." onkeyup="updateGwStudioPreview()">
+                                </div>
+                            </div>
+
+                            <button class="btn btn-cyber w-100 py-3 mt-2" onclick="submitGwStudioGiveaway()">
+                                <i class="fa-solid fa-paper-plane"></i> Launch Custom Giveaway on Discord
+                            </button>
+                        </div>
+
+                        <!-- Right Preview Col -->
+                        <div class="builder-preview-col">
+                            <div class="discord-embed-preview glass" id="gwEmbedBox" style="border-left-color: #ec4899;">
+                                <div class="embed-author">
+                                    <img src="/static/images/logo.png" class="embed-author-icon">
+                                    <span>JOYST CORPORATION SERVICES • Giveaways</span>
+                                </div>
+                                <h4 class="embed-preview-title" id="gwPreviewTitle">🎉 GIVEAWAY: Discord Nitro 1 Month Boost 🎉</h4>
+                                <p class="embed-preview-desc" id="gwPreviewDesc">Click the 🎉 Enter Giveaway button below to participate in this giveaway!</p>
+                                
+                                <div class="mock-button-row" style="margin-top: 14px;">
+                                    <div class="btn btn-emerald btn-sm py-2 px-3 font-bold" style="background:#248046; color:#fff; border-radius:6px; display:inline-flex; align-items:center; gap:8px;">
+                                        <span>🎉 Enter Giveaway</span>
+                                    </div>
+                                </div>
+
+                                <div class="embed-preview-footer text-muted font-mono" id="gwPreviewFooter" style="font-size: 11px; margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px;">
+                                    JOYST CORPORATION Giveaways • React to Enter
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Giveaways Table -->
+                <div class="card-container glass">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-gift text-cyan"></i> Active Discord Giveaways Hub</h3>
+                        <button class="btn btn-secondary btn-sm" onclick="loadGiveaways()">
+                            <i class="fa-solid fa-rotate"></i> Refresh List
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="cyber-table">
+                            <thead>
+                                <tr>
+                                    <th>Prize</th>
+                                    <th>Winners</th>
+                                    <th>Host ID</th>
+                                    <th>Channel ID</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="giveawaysTableBody">
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">Loading active giveaways...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 12: AUDIT INCIDENTS LOG -->
+            <div id="tab-logs" class="tab-content">
+                <div class="card-container glass">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-shield-virus text-pink"></i> Security Audit Incident Stream</h3>
+                        <div class="search-box">
+                            <input type="text" id="logSearchInput" placeholder="Filter incidents..." onkeyup="filterAuditLogs()">
+                        </div>
+                    </div>
+                    
+                    <div class="audit-stream" id="auditStream">
+                        <div class="text-center py-4 text-muted">Loading audit incidents...</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Adding Whitelist -->
+    <div class="modal-overlay" id="whitelistModal" style="display: none;" onclick="if(event.target===this) closeWhitelistModal()">
+        <div class="modal-card glass">
+            <div class="modal-header">
+                <h3>Add Whitelist Target</h3>
+                <button class="btn-close" onclick="closeWhitelistModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Target User / Role / Bot ID</label>
+                    <input type="text" id="newWhitelistId" placeholder="e.g. 1531166516135989379">
+                </div>
+                <div class="form-group">
+                    <label>Target Type</label>
+                    <select id="newWhitelistType">
+                        <option value="user">User</option>
+                        <option value="role">Role</option>
+                        <option value="bot">Bot</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Feature Scope</label>
+                    <select id="newWhitelistFeature">
+                        <option value="all">Full Immunity (All Features)</option>
+                        <option value="anti_nuke">Anti-Nuke Only</option>
+                        <option value="anti_spam">Anti-Spam Only</option>
+                        <option value="anti_link">Anti-Link Only</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeWhitelistModal()">Cancel</button>
+                <button class="btn btn-cyber" onclick="submitNewWhitelist()">Add Whitelist</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Deploying Ticket Panel -->
+    <div class="modal-overlay" id="ticketPanelModal" style="display: none;" onclick="if(event.target===this) closeCreateTicketPanelModal()">
+        <div class="modal-card glass">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-ticket text-purple"></i> Deploy Interactive Ticket Panel</h3>
+                <button class="btn-close" onclick="closeCreateTicketPanelModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Target Channel ID</label>
+                    <input type="text" id="ticketPanelChannelId" placeholder="e.g. 1534232782690320604">
+                </div>
+                <div class="form-group">
+                    <label>Panel Title</label>
+                    <input type="text" id="ticketPanelTitle" value="📩 Support Ticket Vault">
+                </div>
+                <div class="form-group">
+                    <label>Panel Description</label>
+                    <textarea id="ticketPanelDesc" rows="3" style="width:100%; background:rgba(0,0,0,0.3); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:10px;">Click the button below to open a private support ticket with server staff.</textarea>
+                </div>
+                <div class="form-group">
+                    <label>Button Label</label>
+                    <input type="text" id="ticketPanelBtnLabel" value="Open Support Ticket">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeCreateTicketPanelModal()">Cancel</button>
+                <button class="btn btn-cyber" onclick="submitCreateTicketPanel()">Deploy Panel to Discord</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Launching Giveaway -->
+    <div class="modal-overlay" id="giveawayModal" style="display: none;" onclick="if(event.target===this) closeCreateGiveawayModal()">
+        <div class="modal-card glass">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-gift text-pink"></i> Launch Discord Giveaway</h3>
+                <button class="btn-close" onclick="closeCreateGiveawayModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Target Channel ID</label>
+                    <input type="text" id="giveawayChannelId" placeholder="e.g. 1534232782690320604">
+                </div>
+                <div class="form-group">
+                    <label>Prize Name</label>
+                    <input type="text" id="giveawayPrize" placeholder="e.g. Discord Nitro 1 Month">
+                </div>
+                <div class="form-group">
+                    <label>Duration (in Minutes)</label>
+                    <input type="number" id="giveawayDurationMins" value="60">
+                </div>
+                <div class="form-group">
+                    <label>Number of Winners</label>
+                    <input type="number" id="giveawayWinners" value="1">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeCreateGiveawayModal()">Cancel</button>
+                <button class="btn btn-cyber" onclick="submitCreateGiveaway()">Post Giveaway Embed</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Admin Passkey Login -->
+    <div class="modal-overlay" id="adminLoginModal" style="display: none;" onclick="if(event.target===this) closeAdminLoginModal()">
+        <div class="modal-card glass">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-key text-purple"></i> Admin Security Passkey</h3>
+                <button class="btn-close" onclick="closeAdminLoginModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="text-sub mb-3">Enter your secret Admin Passkey to unlock bot control actions.</p>
+                <div class="form-group">
+                    <label>Admin Passkey</label>
+                    <input type="password" id="adminPasskeyInput" placeholder="Enter Admin Passkey">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeAdminLoginModal()">Cancel</button>
+                <button class="btn btn-cyber" onclick="submitAdminLogin()">Authenticate Admin</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 1. CUSTOM PURGE MESSAGES MODAL -->
+    <div id="purgeModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content glass" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-broom text-purple"></i> Purge Channel Messages</h3>
+                <button class="btn-close" onclick="closePurgeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="text-sub mb-3">Bulk delete messages instantly from any text channel.</p>
+                <div class="form-group mb-3">
+                    <label><i class="fa-solid fa-hashtag text-cyan"></i> Target Channel ID</label>
+                    <input type="text" id="purgeChannelIdInput" placeholder="e.g. 1441003381689942127" value="1441003381689942127">
+                </div>
+                <div class="form-group mb-3">
+                    <label><i class="fa-solid fa-layer-group text-pink"></i> Message Count (1 - 100)</label>
+                    <div style="display:flex; align-items:center; gap:15px;">
+                        <input type="range" id="purgeAmountRange" min="1" max="100" value="50" style="flex:1;" oninput="document.getElementById('purgeAmountLabel').innerText = this.value">
+                        <span id="purgeAmountLabel" class="badge badge-purple" style="font-size:16px; padding: 6px 12px;">50</span>
+                    </div>
+                </div>
+                <div class="form-group mb-3">
+                    <label><i class="fa-solid fa-pen-to-square text-amber"></i> Action Reason</label>
+                    <input type="text" id="purgeReasonInput" value="Message Purge Action via Web Dashboard">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closePurgeModal()">Cancel</button>
+                <button class="btn btn-cyber" onclick="submitPurgeFromModal()"><i class="fa-solid fa-broom"></i> Confirm & Purge</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. CUSTOM LOCK CHANNELS MODAL -->
+    <div id="lockModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content glass" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-lock text-pink"></i> Emergency Channel Lockdown</h3>
+                <button class="btn-close" onclick="closeLockModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="text-sub mb-3">Lock text channels to prevent incoming spam or raid attacks.</p>
+                <div class="form-group mb-3">
+                    <label><i class="fa-solid fa-layer-group text-cyan"></i> Target Scope</label>
+                    <select id="lockScopeSelect">
+                        <option value="all">🔒 Lock All Public Text Channels</option>
+                        <option value="single">#️⃣ Main Text Channel</option>
+                    </select>
+                </div>
+                <div class="form-group mb-3">
+                    <label><i class="fa-solid fa-clock text-amber"></i> Lockdown Duration</label>
+                    <select id="lockDurationSelect">
+                        <option value="15">15 Minutes</option>
+                        <option value="60" selected>1 Hour</option>
+                        <option value="360">6 Hours</option>
+                        <option value="1440">24 Hours (Indefinite)</option>
+                    </select>
+                </div>
+                <div class="form-group mb-3">
+                    <label><i class="fa-solid fa-shield text-purple"></i> Reason</label>
+                    <input type="text" id="lockReasonInput" value="Emergency Anti-Raid Channel Lockdown">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeLockModal()">Cancel</button>
+                <button class="btn btn-cyber" style="background: linear-gradient(135deg, #ec4899, #f43f5e);" onclick="submitLockFromModal()"><i class="fa-solid fa-lock"></i> Confirm Lockdown</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. CUSTOM SYNC COMMANDS MODAL -->
+    <div id="syncModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content glass" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-terminal text-cyan"></i> Sync Slash Commands</h3>
+                <button class="btn-close" onclick="closeSyncModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="text-sub mb-3">Instantly register and sync all 32 application slash commands with Discord Gateway.</p>
+                <div class="glass p-3 mb-3" style="border-radius: 12px; background: rgba(0,0,0,0.3);">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-sub">Registered Commands:</span>
+                        <span class="badge badge-info">32 Slash Commands</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-sub">Target Guild ID:</span>
+                        <code class="text-cyan">1265951470994329650</code>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-sub">Gateway Status:</span>
+                        <span class="badge badge-emerald">CONNECTED (0ms latency)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeSyncModal()">Cancel</button>
+                <button class="btn btn-cyber" onclick="submitSyncFromModal()"><i class="fa-solid fa-rotate"></i> Confirm & Sync Commands</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. CUSTOM EMERGENCY QUARANTINE MODAL -->
+    <div id="quarantineModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content glass" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-shield-cat text-emerald"></i> Emergency Anti-Nuke Quarantine</h3>
+                <button class="btn-close" onclick="closeQuarantineModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="text-sub mb-3">Activate instant Anti-Nuke Quarantine shield to isolate suspicious admin actions.</p>
+                <div class="form-group mb-3">
+                    <label><i class="fa-solid fa-shield-halved text-emerald"></i> Quarantine Protection Level</label>
+                    <select id="quarantineLevelSelect">
+                        <option value="MAX">🔴 MAXIMUM (Lock Channels + Revoke Admin Privileges)</option>
+                        <option value="HIGH">🟡 HIGH (Audit Logging + Channel Rate Limiting)</option>
+                    </select>
+                </div>
+                <div class="form-group mb-3">
+                    <label><i class="fa-solid fa-note-sticky text-amber"></i> Security Log Note</label>
+                    <input type="text" id="quarantineReasonInput" value="Emergency Anti-Nuke Quarantine Shield Triggered via Web Dashboard">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeQuarantineModal()">Cancel</button>
+                <button class="btn btn-cyber" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="submitQuarantineFromModal()"><i class="fa-solid fa-shield-cat"></i> Activate Quarantine Shield</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GLOBAL CTRL+K COMMAND SEARCH SPOTLIGHT MODAL -->
+    <div id="commandSpotlightModal" class="modal-overlay" style="display: none;" onclick="if(event.target===this) closeCommandSpotlight()">
+        <div class="modal-content glass" style="max-width: 650px; padding: 24px; border-radius: 20px; box-shadow: 0 0 50px rgba(168, 85, 247, 0.4);">
+            <div class="spotlight-header" style="display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 14px; margin-bottom: 16px;">
+                <i class="fa-solid fa-magnifying-glass text-cyan" style="font-size: 20px;"></i>
+                <input type="text" id="spotlightSearchInput" placeholder="Search 32 slash commands (e.g. /antinuke, /music, weather, /ticket)..." style="flex: 1; border: none; background: transparent; color: #fff; font-size: 16px; outline: none;" onkeyup="filterSpotlightCommands(this.value)">
+                <span class="badge badge-purple" style="font-size: 11px;">ESC TO CLOSE</span>
+            </div>
+            <div id="spotlightResultsList" style="max-height: 360px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;">
+                <!-- Rendered dynamically by app.js -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="/static/js/app.js?v=2026_v999"></script>
+    <script src="/static/js/splashCursor.js?v=2026_v2"></script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JOYST CORPORATION — Terms of Service</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/style.css?v=2026_v999">
+</head>
+<body class="landing-body">
+    <canvas id="galaxyCanvas"></canvas>
+    
+    <header class="public-navbar glass">
+        <div class="nav-container">
+            <a href="/" class="brand-link">
+                <img src="/static/images/logo.png" alt="SYPHON SECURITY Logo" class="brand-logo-img">
+                <div class="brand-text">
+                    <h2>SYPHON <span>SECURITY</span></h2>
+                    <span class="brand-badge">CYBER SECURITY OS</span>
+                </div>
+            </a>
+            <nav class="public-menu">
+                <a href="/" class="nav-link"><i class="fa-solid fa-house"></i> Home</a>
+                <a href="/features" class="nav-link"><i class="fa-solid fa-cubes"></i> Features</a>
+                <a href="/login/discord" id="landingDashboardNavLink" class="nav-link"><i class="fa-brands fa-discord"></i> Login with Discord</a>
+                <a href="/privacy" class="nav-link"><i class="fa-solid fa-shield-halved"></i> Privacy Policy</a>
+                <a href="/terms" class="nav-link active"><i class="fa-solid fa-file-contract"></i> Terms</a>
+            </nav>
+            <div class="nav-cta">
+                <button class="btn-theme-toggle" id="themeToggleBtn" onclick="toggleDarkLightTheme()" title="Switch Light/Dark Theme" style="margin-right: 10px;">
+                    <i class="fa-solid fa-moon text-amber"></i>
+                </button>
+                <div id="landingUserBadge" style="display: none; align-items: center; gap: 8px; background: rgba(255,255,255,0.06); padding: 4px 12px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.15); margin-right: 10px;">
+                    <img id="landingUserAvatar" src="" style="width: 26px; height: 26px; border-radius: 50%;">
+                    <span id="landingUserName" style="font-weight: 600; font-size: 13px; color: #fff;"></span>
+                    <a href="/logout" style="color: #ef4444; font-size: 12px; margin-left: 6px; text-decoration: none;" title="Logout"><i class="fa-solid fa-right-from-bracket"></i></a>
+                </div>
+                <a href="https://discord.com/oauth2/authorize?client_id=1534949562383339660&permissions=8&scope=bot%20applications.commands" target="_blank" class="btn btn-cyber">
+                    <i class="fa-brands fa-discord"></i> Add To Discord
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="page-container">
+        <div class="glass card-container legal-card">
+            <h1><i class="fa-solid fa-file-contract text-purple"></i> Terms of Service</h1>
+            <p class="text-muted">Last Updated: August 4, 2026</p>
+            <hr class="legal-hr">
+
+            <h3>1. Agreement to Terms</h3>
+            <p>By inviting JOYST CORPORATION SECURITY BOT to your Discord server or utilizing the Web Control Dashboard, you agree to comply with these Terms of Service and Discord Developer Terms of Service.</p>
+
+            <h3>2. Usage & Restrictions</h3>
+            <p>You agree not to exploit, abuse, or reverse engineer bot APIs or security features. Automated spam, raid attempts, or malicious overload attacks against bot infrastructure are strictly prohibited.</p>
+
+            <h3>3. Service Availability</h3>
+            <p>We strive to maintain 99.9% service uptime. However, JOYST CORPORATION SERVICES is not liable for temporary service interruptions caused by Discord API outages, internet routing failures, or scheduled maintenance.</p>
+
+            <h3>4. Termination</h3>
+            <p>We reserve the right to restrict bot access to any server or user found violating Discord Terms of Service or abusing bot infrastructure.</p>
+        </div>
+    </main>
+
+    <footer class="public-footer">
+        <div class="footer-bottom">
+            <p>&copy; 2026 JOYST CORPORATION SERVICES. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script src="/static/js/app.js?v=2026_v999"></script>
+    <script src="/static/js/splashCursor.js?v=2026_v1"></script>
+</body>
+</html>
