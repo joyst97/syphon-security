@@ -3,6 +3,7 @@ from discord.ext import commands
 import asyncio
 import logging
 import os
+import time
 import threading
 import sys
 import database as db
