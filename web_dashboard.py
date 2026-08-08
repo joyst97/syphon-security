@@ -245,7 +245,7 @@ def api_stats():
 
     primary_guild = resolve_guild_id(config.PRIMARY_GUILD_ID)
 
-    if bot_instance and bot_instance.is_ready():
+    if bot_instance and (bot_instance.is_ready() or (hasattr(bot_instance, "user") and bot_instance.user and not bot_instance.is_closed())):
         bot_status = "ONLINE"
         live_g = len(bot_instance.guilds)
         live_u = sum([(g.member_count or len(g.members) or 0) for g in bot_instance.guilds])
