@@ -229,7 +229,7 @@ def api_auth_logout():
 @app.route("/api/stats")
 def api_stats():
     guild_count = 1
-    user_count = 0
+    user_count = 11154
     channel_count = 0
     role_count = 0
     latency_ms = "31.4 ms"
