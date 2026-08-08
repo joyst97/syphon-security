@@ -689,10 +689,8 @@ function fetchStats() {
             const latVal = document.getElementById('latencyVal');
             if (latVal) latVal.innerText = data.latency || '--';
 
-            const rawUsers = Number(data.users || 0);
-            const totalUsers = rawUsers > 0 ? rawUsers : 11154;
-            const rawGuilds = Number(data.guilds || 0);
-            const totalGuilds = rawGuilds > 0 ? rawGuilds : 1;
+            const totalUsers = Number(data.users || 0);
+            const totalGuilds = Number(data.guilds || 0);
 
             const formattedUsers = totalUsers.toLocaleString();
 

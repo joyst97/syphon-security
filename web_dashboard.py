@@ -228,8 +228,8 @@ def api_auth_logout():
 
 @app.route("/api/stats")
 def api_stats():
-    guild_count = 1
-    user_count = 11154
+    guild_count = 0
+    user_count = 0
     channel_count = 0
     role_count = 0
     latency_ms = "31.4 ms"
@@ -242,13 +242,7 @@ def api_stats():
     if bot_instance and bot_instance.is_ready():
         bot_status = "ONLINE"
         guild_count = len(bot_instance.guilds)
-        total_m = 0
-        for g in bot_instance.guilds:
-            cnt = getattr(g, "member_count", 0) or len(g.members) or 0
-            if cnt == 0 and g.id == 1265951470994329650:
-                cnt = 11154
-            total_m += cnt
-        user_count = total_m if total_m > 0 else 11154
+        user_count = sum([(g.member_count or len(g.members) or 0) for g in bot_instance.guilds])
         channel_count = sum([len(g.channels) for g in bot_instance.guilds])
         role_count = sum([len(g.roles) for g in bot_instance.guilds])
         latency_ms = f"{round(bot_instance.latency * 1000, 2)} ms"
