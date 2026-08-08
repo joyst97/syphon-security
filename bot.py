@@ -204,14 +204,43 @@ class AegisBot(commands.Bot):
             except Exception as e:
                 logger.error(f"Error initializing guild {guild.name}: {e}")
 
-        activity = discord.Streaming(
-            name="JOYST CORPORATION SECURITY",
-            url="https://twitch.tv/joystcorp"
-        )
-        await self.change_presence(status=discord.Status.online, activity=activity)
+        # Start dynamic 3-text rotating presence status loop
+        self.loop.create_task(self.rotate_status_loop())
 
         # Broadcast startup embed log to security log channel
         await send_bot_startup_embed(self)
+
+    async def rotate_status_loop(self):
+        """Cycles through 3 live dynamic statuses every 15 seconds: Help Command, Server Count, Member Count!"""
+        await self.wait_until_ready()
+        status_index = 0
+        while not self.is_closed():
+            try:
+                guild_count = len(self.guilds)
+                total_members = sum([(g.member_count or len(g.members) or 0) for g in self.guilds])
+
+                if status_index == 0:
+                    activity = discord.Activity(
+                        type=discord.ActivityType.listening,
+                        name=",help • SYPHON SECURITY"
+                    )
+                elif status_index == 1:
+                    activity = discord.Activity(
+                        type=discord.ActivityType.watching,
+                        name=f"Protecting {guild_count:,} Servers"
+                    )
+                else:
+                    activity = discord.Activity(
+                        type=discord.ActivityType.watching,
+                        name=f"Protecting {total_members:,} Members"
+                    )
+
+                await self.change_presence(status=discord.Status.online, activity=activity)
+                status_index = (status_index + 1) % 3
+            except Exception as e:
+                logger.error(f"Error rotating bot status: {e}")
+
+            await asyncio.sleep(15)
 
     async def sync_guild_avatar(self, guild: discord.Guild):
         """Dynamically syncs the bot's server PFP avatar to match that specific server's logo!"""

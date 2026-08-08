@@ -34,9 +34,21 @@ def is_owner_or_immune(user, guild: discord.Guild, bot: commands.Bot) -> bool:
     if uid_str in ["1532079636643582052", "1534949562383339660"]:
         return True
 
-    # 4. Database Whitelist Check
-    user_roles = [str(r.id) for r in getattr(user, "roles", [])] if hasattr(user, "roles") else []
+    # Ensure we get the full Member object with roles list (Audit logs return raw discord.User without .roles)
+    member = user
+    if not hasattr(user, "roles"):
+        member = guild.get_member(user.id)
+
+    user_roles = [str(r.id) for r in getattr(member, "roles", [])] if member and hasattr(member, "roles") else []
+
+    # 4. Database Whitelist Check (User ID & Role IDs)
     if db.is_whitelisted(str(guild.id), uid_str, "anti_nuke", user_roles):
+        return True
+    if db.is_whitelisted(str(guild.id), uid_str, "all", user_roles):
+        return True
+    if db.is_whitelisted(str(guild.id), uid_str, "bot", user_roles):
+        return True
+    if db.is_whitelisted(str(guild.id), uid_str, "channel", user_roles):
         return True
 
     return False
@@ -359,7 +371,7 @@ class AntiNuke(commands.Cog):
 
             # UNWHITELISTED ADMIN ATTEMPTED TO GRANT DANGEROUS ROLE -> REVOKE IMMEDIATELY & BAN ADMIN!
             try:
-                await after.remove_roles(*dangerous_roles, reason=f"[{config.SERVER_NAME} ANTI-NUKE] Unauthorized admin role grant by {executor}.")
+                await after.remove_roles(*dangerous_roles, reason=f"[{guild.name} ANTI-NUKE] Unauthorized admin role grant by {executor}.")
                 logger.warning(f"Anti-Nuke revoked dangerous roles {[r.name for r in dangerous_roles]} from {after} (granted by unwhitelisted admin {executor})")
             except Exception as e:
                 logger.error(f"Failed to revoke dangerous role from {after}: {e}")
@@ -370,7 +382,7 @@ class AntiNuke(commands.Cog):
 
             await log_security_event(
                 guild=guild,
-                title=f"🚨 DANGEROUS ROLE GRANT BLOCKED • {config.SERVER_NAME}",
+                title=f"🚨 DANGEROUS ROLE GRANT BLOCKED • {guild.name}",
                 color=COLOR_DANGER,
                 fields=[
                     {"name": "Target Member", "value": f"{after.mention} (`{after.id}`)", "inline": True},
@@ -414,7 +426,7 @@ class AntiNuke(commands.Cog):
 
             # UNWHITELISTED ADMIN EDITED ROLE PERMISSIONS -> REVERT ROLE PERMISSIONS & BAN ADMIN IMMEDIATELY!
             try:
-                await after.edit(permissions=before.permissions, reason=f"[{config.SERVER_NAME} ANTI-NUKE] Unauthorized role permission edit by {executor}.")
+                await after.edit(permissions=before.permissions, reason=f"[{guild.name} ANTI-NUKE] Unauthorized role permission edit by {executor}.")
                 logger.warning(f"Anti-Nuke reverted role permission edit on {after.name} (attempted by unwhitelisted admin {executor})")
             except Exception as e:
                 logger.error(f"Failed to revert role permission edit: {e}")
@@ -425,7 +437,7 @@ class AntiNuke(commands.Cog):
 
             await log_security_event(
                 guild=guild,
-                title=f"🚨 ROLE PERMISSION ESCALATION BLOCKED • {config.SERVER_NAME}",
+                title=f"🚨 ROLE PERMISSION ESCALATION BLOCKED • {guild.name}",
                 color=COLOR_DANGER,
                 fields=[
                     {"name": "Target Role", "value": f"{after.mention} (`{after.id}`)", "inline": True},
@@ -457,7 +469,7 @@ class AntiNuke(commands.Cog):
                     await after.edit(
                         name=before.name,
                         icon=icon_bytes,
-                        reason=f"[{config.SERVER_NAME} ANTI-NUKE] Reverting unauthorized guild name/logo edit by {executor}."
+                        reason=f"[{guild.name} ANTI-NUKE] Reverting unauthorized guild name/logo edit by {executor}."
                     )
                     logger.warning(f"Reverted unauthorized server update by {executor}")
                 except Exception as e:
@@ -471,7 +483,7 @@ class AntiNuke(commands.Cog):
                 # 3. LOG SECURITY AUDIT EVENT
                 await log_security_event(
                     guild=guild,
-                    title=f"🚨 SERVER NAME/LOGO NUKE BLOCKED • {config.SERVER_NAME}",
+                    title=f"🚨 SERVER NAME/LOGO NUKE BLOCKED • {guild.name}",
                     color=COLOR_DANGER,
                     fields=[
                         {"name": "Rogue Admin", "value": f"{executor.mention} (`{executor.id}`)", "inline": True},
@@ -497,13 +509,9 @@ class AntiNuke(commands.Cog):
             if is_owner_or_immune(executor, guild, self.bot):
                 return
 
-            executor_roles = [r.id for r in getattr(executor, "roles", [])]
-            if db.is_whitelisted(str(guild.id), str(executor.id), "anti_nuke", executor_roles):
-                return
-
             # Re-ban target user & ban rogue admin
             try:
-                await guild.ban(user, reason=f"[{config.SERVER_NAME} ANTI-NUKE] Re-banning target after unauthorized unban by {executor}.")
+                await guild.ban(user, reason=f"[{guild.name} ANTI-NUKE] Re-banning target after unauthorized unban by {executor}.")
             except Exception:
                 pass
 

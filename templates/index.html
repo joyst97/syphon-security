@@ -536,8 +536,8 @@
                     <div class="switches-grid">
                         <div class="switch-row">
                             <div class="switch-info">
-                                <h4><i class="fa-solid fa-atom"></i> Anti-Nuke Protection</h4>
-                                <p>Strip permissions & quarantine rogue admin mass-deletions in &lt; 0.3s.</p>
+                                <h4><i class="fa-solid fa-atom text-purple"></i> Master Anti-Nuke Protection Core</h4>
+                                <p>Master toggle for server anti-nuke defense system.</p>
                             </div>
                             <label class="ios-switch">
                                 <input type="checkbox" id="toggle-anti_nuke" onchange="updateSetting('anti_nuke', this.checked)">
@@ -547,7 +547,117 @@
 
                         <div class="switch-row">
                             <div class="switch-info">
-                                <h4><i class="fa-solid fa-users-slash"></i> Anti-Raid & Join Flood</h4>
+                                <h4><i class="fa-solid fa-user-ninja text-danger"></i> Ban & Kick Protection</h4>
+                                <p>Revert unauthorized admin bans/kicks and ban the offender instantly.</p>
+                            </div>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="toggle-anti_ban" onchange="updateSetting('anti_ban', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="switch-row">
+                            <div class="switch-info">
+                                <h4><i class="fa-solid fa-shield-halved text-cyan"></i> Role Management & Perm Guard</h4>
+                                <p>Revert dangerous role permission edits (Admin/Manage Roles) and ban culprit.</p>
+                            </div>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="toggle-anti_role" onchange="updateSetting('anti_role', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="switch-row">
+                            <div class="switch-info">
+                                <h4><i class="fa-solid fa-folder-tree text-emerald"></i> Channel Creation/Deletion Guard</h4>
+                                <p>Recreate deleted text/voice channels and ban rogue admins.</p>
+                            </div>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="toggle-anti_channel" onchange="updateSetting('anti_channel', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="switch-row">
+                            <div class="switch-info">
+                                <h4><i class="fa-solid fa-plug text-amber"></i> Webhook Security Safeguard</h4>
+                                <p>Delete unauthorized webhooks and ban unwhitelisted creators.</p>
+                            </div>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="toggle-anti_webhook" onchange="updateSetting('anti_webhook', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="switch-row">
+                            <div class="switch-info">
+                                <h4><i class="fa-solid fa-robot text-pink"></i> Unwhitelisted Bot Add Safeguard</h4>
+                                <p>Instantly ban any unwhitelisted bot joining the server and ban inviter.</p>
+                            </div>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="toggle-anti_bot" onchange="updateSetting('anti_bot', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="switch-row">
+                            <div class="switch-info">
+                                <h4><i class="fa-solid fa-link text-purple"></i> Vanity URL Theft Protection</h4>
+                                <p>Restore custom server vanity URL code if stolen or changed.</p>
+                            </div>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="toggle-anti_vanity" onchange="updateSetting('anti_vanity', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="switch-row">
+                            <div class="switch-info">
+                                <h4><i class="fa-solid fa-face-smile text-cyan"></i> Emoji & Sticker Nuke Protection</h4>
+                                <p>Prevent mass deletion of custom server emojis and stickers.</p>
+                            </div>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="toggle-anti_emoji" onchange="updateSetting('anti_emoji', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="switch-row">
+                            <div class="switch-info">
+                                <h4><i class="fa-solid fa-users-slash text-danger"></i> Member Prune Prevention</h4>
+                                <p>Ban any admin attempting mass inactive member prune.</p>
+                            </div>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="toggle-anti_prune" onchange="updateSetting('anti_prune', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="switch-row">
+                            <div class="switch-info">
+                                <h4><i class="fa-solid fa-at text-amber"></i> @everyone / @here Raid Shield</h4>
+                                <p>Auto-delete unauthorized @everyone / @here mentions and timeout/ban offender.</p>
+                            </div>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="toggle-anti_mention" onchange="updateSetting('anti_mention', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="switch-row">
+                            <div class="switch-info">
+                                <h4><i class="fa-solid fa-cubes text-emerald"></i> Integration Creation Protection</h4>
+                                <p>Block unauthorized bot integrations and third-party apps.</p>
+                            </div>
+                            <label class="ios-switch">
+                                <input type="checkbox" id="toggle-anti_integration" onchange="updateSetting('anti_integration', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="switch-row">
+                            <div class="switch-info">
+                                <h4><i class="fa-solid fa-shield-virus text-purple"></i> Anti-Raid & Join Flood</h4>
                                 <p>Detect and auto-kick suspicious raid waves and bot alt-accounts.</p>
                             </div>
                             <label class="ios-switch">
@@ -558,7 +668,7 @@
 
                         <div class="switch-row">
                             <div class="switch-info">
-                                <h4><i class="fa-solid fa-comment-slash"></i> Anti-Spam & Character Flood</h4>
+                                <h4><i class="fa-solid fa-comment-slash text-cyan"></i> Anti-Spam & Character Flood</h4>
                                 <p>Mute users sending character floods or rapid message spam.</p>
                             </div>
                             <label class="ios-switch">
@@ -569,22 +679,11 @@
 
                         <div class="switch-row">
                             <div class="switch-info">
-                                <h4><i class="fa-solid fa-link-slash"></i> Anti-Invite & Phishing Link Filter</h4>
+                                <h4><i class="fa-solid fa-link-slash text-pink"></i> Anti-Invite & Phishing Link Filter</h4>
                                 <p>Delete unauthorized Discord invite links and scam URL domains.</p>
                             </div>
                             <label class="ios-switch">
                                 <input type="checkbox" id="toggle-anti_invite" onchange="updateSetting('anti_invite', this.checked)">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-
-                        <div class="switch-row">
-                            <div class="switch-info">
-                                <h4><i class="fa-solid fa-at"></i> Anti-Mass Mention Shield</h4>
-                                <p>Quarantine users attempting @everyone or mass role ping abuse.</p>
-                            </div>
-                            <label class="ios-switch">
-                                <input type="checkbox" id="toggle-anti_mass_mention" onchange="updateSetting('anti_mass_mention', this.checked)">
                                 <span class="slider"></span>
                             </label>
                         </div>

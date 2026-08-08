@@ -40,10 +40,24 @@ def init_db():
     )
     """)
 
-    try:
-        cursor.execute("ALTER TABLE guild_settings ADD COLUMN member_counter_channel_id TEXT DEFAULT NULL")
-    except Exception:
-        pass
+    # Add individual security module columns safely
+    new_cols = [
+        "anti_ban INTEGER DEFAULT 1",
+        "anti_role INTEGER DEFAULT 1",
+        "anti_channel INTEGER DEFAULT 1",
+        "anti_webhook INTEGER DEFAULT 1",
+        "anti_bot INTEGER DEFAULT 1",
+        "anti_vanity INTEGER DEFAULT 1",
+        "anti_emoji INTEGER DEFAULT 1",
+        "anti_prune INTEGER DEFAULT 1",
+        "anti_mention INTEGER DEFAULT 1",
+        "anti_integration INTEGER DEFAULT 1"
+    ]
+    for col in new_cols:
+        try:
+            cursor.execute(f"ALTER TABLE guild_settings ADD COLUMN {col}")
+        except Exception:
+            pass
 
     # Whitelist Table
     cursor.execute("""
@@ -294,7 +308,7 @@ def is_whitelisted(guild_id: str, target_id: str, feature: str = 'all', role_ids
     result = False
 
     cursor.execute(
-        "SELECT 1 FROM whitelists WHERE guild_id = ? AND target_id = ? AND (feature = 'all' OR feature = ?)",
+        "SELECT 1 FROM whitelists WHERE guild_id = ? AND target_id = ? AND (feature = 'all' OR feature = 'anti_nuke' OR feature = ?)",
         (gid, str(target_id), feature)
     )
     if cursor.fetchone():
@@ -302,7 +316,7 @@ def is_whitelisted(guild_id: str, target_id: str, feature: str = 'all', role_ids
 
     if not result and channel_id:
         cursor.execute(
-            "SELECT 1 FROM whitelists WHERE guild_id = ? AND target_id = ? AND (feature = 'all' OR feature = ?)",
+            "SELECT 1 FROM whitelists WHERE guild_id = ? AND target_id = ? AND (feature = 'all' OR feature = 'anti_nuke' OR feature = ?)",
             (gid, str(channel_id), feature)
         )
         if cursor.fetchone():
@@ -311,7 +325,7 @@ def is_whitelisted(guild_id: str, target_id: str, feature: str = 'all', role_ids
     if not result and role_ids:
         for r_id in role_ids:
             cursor.execute(
-                "SELECT 1 FROM whitelists WHERE guild_id = ? AND target_id = ? AND (feature = 'all' OR feature = ?)",
+                "SELECT 1 FROM whitelists WHERE guild_id = ? AND target_id = ? AND (feature = 'all' OR feature = 'anti_nuke' OR feature = ?)",
                 (gid, str(r_id), feature)
             )
             if cursor.fetchone():

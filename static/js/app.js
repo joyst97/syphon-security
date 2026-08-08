@@ -728,10 +728,17 @@ function fetchSettings() {
     fetch(`/api/settings/${currentGuildId}`)
         .then(res => res.json())
         .then(settings => {
-            const toggles = ['anti_nuke', 'anti_raid', 'anti_spam', 'anti_invite', 'anti_mass_mention'];
+            const toggles = [
+                'anti_nuke', 'anti_ban', 'anti_role', 'anti_channel',
+                'anti_webhook', 'anti_bot', 'anti_vanity', 'anti_emoji',
+                'anti_prune', 'anti_mention', 'anti_integration',
+                'anti_raid', 'anti_spam', 'anti_invite'
+            ];
             toggles.forEach(t => {
                 const el = document.getElementById(`toggle-${t}`);
-                if (el) el.checked = Boolean(settings[t]);
+                if (el && settings[t] !== undefined) {
+                    el.checked = Boolean(settings[t]);
+                }
             });
         })
         .catch(err => console.warn('Settings fetch error:', err));

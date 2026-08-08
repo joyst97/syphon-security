@@ -492,25 +492,70 @@ class SecurityCmd(commands.Cog):
     @commands.group(name="whitelist", aliases=["wl"], invoke_without_command=True)
     @commands.has_permissions(administrator=True)
     async def prefix_whitelist(self, ctx):
-        await self._send_whitelist_list(ctx)
+        await self._send_whitelist_help(ctx)
+
+    async def _send_whitelist_help(self, ctx):
+        dot = get_emoji("black_dot", ctx.guild)
+        desc = (
+            f"# 📜 SYPHON SECURITY Whitelist Vault\n\n"
+            f"{dot} **To Whitelist a User/Bot:** `,whitelist user @User [feature]`\n"
+            f"{dot} **To Whitelist a Role:** `,whitelist role @Role [feature]`\n"
+            f"{dot} **To Whitelist a Channel:** `,whitelist channel #Channel [feature]`\n"
+            f"{dot} **To Whitelist a Bot:** `,whitelist bot @Bot [feature]`\n"
+            f"{dot} **To Remove Whitelist:** `,whitelist remove <ID/Mention>`\n"
+            f"{dot} **To View All Whitelists:** `,whitelist list`\n\n"
+            f"__**Available Feature Options**__\n"
+            f"• `all` — Full Immunity (Bypasses All Filters)\n"
+            f"• `anti_nuke` — Anti-Nuke Immunity\n"
+            f"• `anti_bot` — Allow Bot Invites & Management\n"
+            f"• `anti_channel` — Allow Channel Create/Delete\n"
+            f"• `anti_role` — Allow Role Create/Delete/Edit\n"
+            f"• `anti_ban` — Allow Member Bans/Kicks\n"
+            f"• `anti_webhook` — Allow Webhook Creation\n"
+            f"• `anti_mention` — Allow @everyone/@here Pings\n"
+            f"• `anti_link` — Allow URL Links\n"
+            f"• `anti_spam` — Allow Fast Messages"
+        )
+        embed = joyst_embed(description=desc, color=COLOR_PURPLE, guild=ctx.guild)
+        await ctx.send(embed=embed)
 
     @prefix_whitelist.command(name="add")
     @commands.has_permissions(administrator=True)
     async def prefix_whitelist_add(self, ctx, target: str, feature: str = "all"):
         clean_id = target.replace("<@", "").replace("<#", "").replace("<&", "").replace("!", "").replace(">", "").strip()
-        if "<# " in target or "<#" in target:
+        if "<#" in target:
             target_type = "channel"
         elif "<@&" in target:
             target_type = "role"
         else:
             target_type = "user"
-
         await self._do_whitelist_add(ctx, clean_id, target, target_type, feature)
+
+    @prefix_whitelist.command(name="user")
+    @commands.has_permissions(administrator=True)
+    async def prefix_whitelist_user(self, ctx, member: discord.Member, feature: str = "all"):
+        await self._do_whitelist_add(ctx, str(member.id), str(member), "user", feature)
+
+    @prefix_whitelist.command(name="role")
+    @commands.has_permissions(administrator=True)
+    async def prefix_whitelist_role(self, ctx, role: discord.Role, feature: str = "all"):
+        await self._do_whitelist_add(ctx, str(role.id), role.name, "role", feature)
+
+    @prefix_whitelist.command(name="bot")
+    @commands.has_permissions(administrator=True)
+    async def prefix_whitelist_bot(self, ctx, bot_member: discord.Member, feature: str = "all"):
+        await self._do_whitelist_add(ctx, str(bot_member.id), str(bot_member), "user", feature)
+
+    @prefix_whitelist.command(name="channel")
+    @commands.has_permissions(administrator=True)
+    async def prefix_whitelist_channel(self, ctx, channel: discord.TextChannel, feature: str = "anti_link"):
+        await self._do_whitelist_add(ctx, str(channel.id), channel.mention, "channel", feature)
 
     @prefix_whitelist.command(name="remove")
     @commands.has_permissions(administrator=True)
-    async def prefix_whitelist_remove(self, ctx, target_id: str, feature: str = "all"):
-        await self._do_whitelist_remove(ctx, target_id, feature)
+    async def prefix_whitelist_remove(self, ctx, target: str, feature: str = "all"):
+        clean_id = target.replace("<@", "").replace("<#", "").replace("<&", "").replace("!", "").replace(">", "").strip()
+        await self._do_whitelist_remove(ctx, clean_id, feature)
 
     @prefix_whitelist.command(name="list")
     @commands.has_permissions(administrator=True)
