@@ -21,6 +21,18 @@ def init_db():
     conn = get_connection()
     cursor = conn.cursor()
 
+    # Dashboard IPC Command Queue Table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS dashboard_ipc_commands (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        guild_id TEXT,
+        command_type TEXT,
+        payload TEXT,
+        status TEXT DEFAULT 'pending',
+        created_at INTEGER
+    )
+    """)
+
     # Bot Stats Cache Table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS bot_stats_cache (
@@ -614,5 +626,51 @@ def get_stat_cache(key: str, default="0"):
         pass
     return str(default)
 
+def push_ipc_command(guild_id: str, command_type: str, payload: str = ""):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        ts = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+        cursor.execute("INSERT INTO dashboard_ipc_commands (guild_id, command_type, payload, status, created_at) VALUES (?, ?, ?, 'pending', ?)", (str(guild_id), command_type, str(payload), ts))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logger.error(f"Error pushing IPC command {command_type}: {e}")
+
+def pop_pending_ipc_commands(guild_id: str = None):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        if guild_id:
+            cursor.execute("SELECT * FROM dashboard_ipc_commands WHERE guild_id = ? AND status = 'pending' ORDER BY id ASC", (str(guild_id),))
+        else:
+            cursor.execute("SELECT * FROM dashboard_ipc_commands WHERE status = 'pending' ORDER BY id ASC")
+        rows = cursor.fetchall()
+        cmds = [dict(r) for r in rows]
+        if cmds:
+            ids = [c["id"] for c in cmds]
+            cursor.execute(f"UPDATE dashboard_ipc_commands SET status = 'processing' WHERE id IN ({','.join(['?']*len(ids))})", ids)
+            conn.commit()
+        conn.close()
+        return cmds
+    except Exception as e:
+        logger.error(f"Error popping IPC commands: {e}")
+        return []
+
+def mark_ipc_command_complete(cmd_id: int, status: str = "completed"):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("UPDATE dashboard_ipc_commands SET status = ? WHERE id = ?", (status, cmd_id))
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
+
 if __name__ == "__main__":
     init_db()
+
+try:
+    init_db()
+except Exception:
+    pass

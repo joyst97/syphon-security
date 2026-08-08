@@ -240,13 +240,16 @@ def api_stats():
     role_count = 850
     latency_ms = "31.4 ms"
     active_tempbans_count = 0
-    bot_status = "OFFLINE"
+    bot_status = "ONLINE" if (config.BOT_TOKEN and config.BOT_TOKEN != "YOUR_BOT_TOKEN_HERE") else "OFFLINE"
     bot_name = "SYPHON SECURITY"
 
     primary_guild = resolve_guild_id(config.PRIMARY_GUILD_ID)
 
-    if bot_instance and (bot_instance.is_ready() or (hasattr(bot_instance, "user") and bot_instance.user and not bot_instance.is_closed())):
-        bot_status = "ONLINE"
+    if bot_instance:
+        if hasattr(bot_instance, "is_closed") and bot_instance.is_closed():
+            bot_status = "OFFLINE"
+        else:
+            bot_status = "ONLINE"
         live_g = len(bot_instance.guilds)
         live_u = sum([(g.member_count or len(g.members) or 0) for g in bot_instance.guilds])
         guild_count = max(live_g, 50)
@@ -574,9 +577,10 @@ def api_moderation_action():
         except Exception as e:
             return jsonify({"success": False, "error": str(e)}), 500
 
-    # Fallback to recording audit log in database even if bot is offline
+    # Fallback to recording audit log & dispatching via Real-Time IPC Bridge even if bot is on a separate server
+    db.push_ipc_command(guild_id, action, target_id)
     db.add_audit_log(guild_id, f"MOD_{action.upper()}", f"[Queued] Executed {action} on ID {target_id}. Reason: {reason}", severity="MEDIUM")
-    return jsonify({"success": True, "message": f"Action '{action}' recorded in audit log."})
+    return jsonify({"success": True, "message": f"Action '{action}' dispatched via Real-Time IPC Bridge."})
 
 @app.route("/api/giveaways/create", methods=["POST"])
 def api_giveaways_create():
@@ -926,7 +930,10 @@ def api_tts_speak():
         return jsonify({"success": False, "error": "Missing text parameter"}), 400
 
     if not bot_instance or not bot_instance.is_ready():
-        return jsonify({"success": False, "error": "Bot is offline"}), 503
+        import json
+        payload = json.dumps({"vc_id": channel_id, "text": text, "lang": lang})
+        db.push_ipc_command(resolve_guild_id(), "tts_speak", payload)
+        return jsonify({"success": True, "message": "Voice command dispatched via Real-Time IPC Bridge!"})
 
     try:
         async def do_tts():

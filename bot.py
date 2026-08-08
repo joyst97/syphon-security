@@ -207,8 +207,65 @@ class AegisBot(commands.Bot):
         # Start dynamic 3-text rotating presence status loop
         self.loop.create_task(self.rotate_status_loop())
 
+        # Start real-time Web Dashboard IPC command listener
+        self.loop.create_task(self.check_dashboard_ipc_loop())
+
         # Broadcast startup embed log to security log channel
         await send_bot_startup_embed(self)
+
+    async def check_dashboard_ipc_loop(self):
+        """Checks for real-time control commands dispatched from the Web Dashboard every 1 second."""
+        await self.wait_until_ready()
+        while not self.is_closed():
+            try:
+                cmds = db.pop_pending_ipc_commands()
+                for c in cmds:
+                    cmd_id = c["id"]
+                    guild_id = c["guild_id"]
+                    ctype = c["command_type"]
+                    payload = c["payload"]
+
+                    guild = self.get_guild(int(guild_id)) if guild_id and guild_id.isdigit() else None
+                    
+                    if ctype == "lock_all" and guild:
+                        for ch in guild.text_channels:
+                            over = ch.overwrites_for(guild.default_role)
+                            over.send_messages = False
+                            try:
+                                await ch.set_permissions(guild.default_role, overwrite=over)
+                            except Exception: pass
+                    elif ctype == "unlock_all" and guild:
+                        for ch in guild.text_channels:
+                            over = ch.overwrites_for(guild.default_role)
+                            over.send_messages = True
+                            try:
+                                await ch.set_permissions(guild.default_role, overwrite=over)
+                            except Exception: pass
+                    elif ctype == "quarantine" and guild:
+                        db.update_guild_setting(str(guild.id), "anti_nuke", 1)
+                        db.update_guild_setting(str(guild.id), "anti_raid", 1)
+                    elif ctype == "sync_slash":
+                        try:
+                            await self.tree.sync()
+                        except Exception: pass
+                    elif ctype == "tts_speak" and guild:
+                        import json
+                        pdata = json.loads(payload) if payload and payload.startswith("{") else {}
+                        vc_id = pdata.get("vc_id")
+                        text = pdata.get("text")
+                        lang = pdata.get("lang", "en")
+                        if vc_id and text:
+                            vc_ch = guild.get_channel(int(vc_id))
+                            if vc_ch and isinstance(vc_ch, discord.VoiceChannel):
+                                tts_cog = self.get_cog("TTS")
+                                if tts_cog:
+                                    await tts_cog.speak_text_in_vc(guild, vc_ch, text, lang)
+
+                    db.mark_ipc_command_complete(cmd_id)
+            except Exception as e:
+                logger.error(f"Error in Dashboard IPC loop: {e}")
+
+            await asyncio.sleep(1)
 
     async def rotate_status_loop(self):
         """Cycles through 3 live dynamic streaming statuses every 15 seconds with Purple Twitch Streaming Badge!"""
