@@ -40,10 +40,13 @@ class JoinWelcomeView(discord.ui.View):
 
 async def send_guild_join_welcome_embed(guild: discord.Guild):
     from embed_builder import joyst_embed, COLOR_PURPLE
+    me = guild.me
+    if not me:
+        return
     target_channel = guild.system_channel
-    if not target_channel or not target_channel.permissions_for(guild.me).send_messages:
+    if not target_channel or not target_channel.permissions_for(me).send_messages:
         for ch in guild.text_channels:
-            if ch.permissions_for(guild.me).send_messages:
+            if ch.permissions_for(me).send_messages:
                 target_channel = ch
                 break
 
@@ -164,20 +167,18 @@ class AegisBot(commands.Bot):
         async def sync_slash():
             await self.wait_until_ready()
             try:
-                # 1. Global Sync for universal application commands
-                synced_global = await self.tree.sync()
-                logger.info(f"⚡ Global Slash Sync: Registered {len(synced_global)} global commands.")
-
-                # 2. Instant Guild Copy Sync (Bypasses Discord's 1-hour global propagation delay!)
+                # 1. Clear any leftover guild-specific command copies to prevent DUPLICATE commands in slash picker UI!
                 for guild in self.guilds:
                     try:
                         guild_obj = discord.Object(id=guild.id)
-                        self.tree.copy_global_to(guild=guild_obj)
-                        synced_guild = await self.tree.sync(guild=guild_obj)
-                        logger.info(f"⚡ Instant Guild Sync: Synced {len(synced_guild)} slash commands to {guild.name} ({guild.id}).")
-                    except Exception as ge:
-                        logger.debug(f"Guild sync note for {guild.name}: {ge}")
+                        self.tree.clear_commands(guild=guild_obj)
+                        await self.tree.sync(guild=guild_obj)
+                    except Exception:
+                        pass
 
+                # 2. Sync clean Global Slash Commands (1 Single Copy per command!)
+                synced_global = await self.tree.sync()
+                logger.info(f"⚡ Global Slash Sync: Registered {len(synced_global)} clean global commands (Zero Duplicates).")
                 logger.info("✅ All Slash & Prefix Commands 100% Auto-Synced & Active Across All Servers!")
             except Exception as e:
                 logger.error(f"Error syncing slash commands: {e}")
@@ -249,12 +250,10 @@ class AegisBot(commands.Bot):
         await self.sync_guild_avatar(guild)
         await send_guild_join_welcome_embed(guild)
         try:
-            guild_obj = discord.Object(id=guild.id)
-            self.tree.copy_global_to(guild=guild_obj)
-            synced = await self.tree.sync(guild=guild_obj)
-            logger.info(f"⚡ Instant New Guild Join Auto-Sync: Synced {len(synced)} slash commands to {guild.name}.")
+            synced = await self.tree.sync()
+            logger.info(f"⚡ Global Slash Commands Active on Guild Join for {guild.name}: {len(synced)} commands.")
         except Exception as e:
-            logger.error(f"Error auto-syncing commands on guild join for {guild.name}: {e}")
+            logger.error(f"Error syncing commands on guild join for {guild.name}: {e}")
 
 def clean_disk_space():
     """Purges temporary files, cache directories, and audio artifacts to prevent Pterodactyl disk quota limits."""

@@ -256,10 +256,13 @@ class Tickets(commands.Cog):
 
         if isinstance(ctx_or_interaction, discord.Interaction):
             await channel.send(embed=embed, view=view)
-            await ctx_or_interaction.response.send_message(f"✅ Ticket King Dropdown Panel deployed to {channel.mention}!", ephemeral=True)
+            if ctx_or_interaction.response.is_done():
+                await ctx_or_interaction.followup.send(f"✅ Ticket Support Panel deployed to {channel.mention}!", ephemeral=True)
+            else:
+                await ctx_or_interaction.response.send_message(f"✅ Ticket Support Panel deployed to {channel.mention}!", ephemeral=True)
         else:
             await channel.send(embed=embed, view=view)
-            await ctx_or_interaction.send(f"✅ Ticket King Dropdown Panel deployed to {channel.mention}!")
+            await ctx_or_interaction.send(f"✅ Ticket Support Panel deployed to {channel.mention}!")
 
     # --- Commands ---
 

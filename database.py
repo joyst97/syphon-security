@@ -25,11 +25,11 @@ def init_db():
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS guild_settings (
         guild_id TEXT PRIMARY KEY,
-        anti_nuke INTEGER DEFAULT 1,
-        anti_raid INTEGER DEFAULT 1,
-        anti_invite INTEGER DEFAULT 1,
-        anti_spam INTEGER DEFAULT 1,
-        anti_mass_mention INTEGER DEFAULT 1,
+        anti_nuke INTEGER DEFAULT 0,
+        anti_raid INTEGER DEFAULT 0,
+        anti_invite INTEGER DEFAULT 0,
+        anti_spam INTEGER DEFAULT 0,
+        anti_mass_mention INTEGER DEFAULT 0,
         verification_enabled INTEGER DEFAULT 0,
         unverified_role_id TEXT DEFAULT NULL,
         verified_role_id TEXT DEFAULT NULL,
@@ -238,14 +238,20 @@ def get_guild_settings(guild_id: str):
 
 def update_guild_setting(guild_id: str, key: str, value):
     gid = str(guild_id)
-    _SETTINGS_CACHE.pop(gid, None)
     conn = get_connection()
     cursor = conn.cursor()
-    get_guild_settings(gid)
+    cursor.execute("SELECT 1 FROM guild_settings WHERE guild_id = ?", (gid,))
+    if not cursor.fetchone():
+        cursor.execute("INSERT INTO guild_settings (guild_id, anti_nuke, anti_raid, anti_invite, anti_spam) VALUES (?, 0, 0, 0, 0)", (gid,))
+        conn.commit()
+
     query = f"UPDATE guild_settings SET {key} = ? WHERE guild_id = ?"
     cursor.execute(query, (value, gid))
     conn.commit()
     conn.close()
+
+    # Invalidate RAM cache AFTER database commit!
+    _SETTINGS_CACHE.pop(gid, None)
 
 # --- Whitelist Helpers ---
 

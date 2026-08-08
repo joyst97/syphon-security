@@ -51,130 +51,115 @@ class HelpDropdown(discord.ui.Select):
         bot_user = interaction.client.user
         bot_avatar = bot_user.display_avatar.url
 
+        dot = get_emoji("black_dot", guild)
         if selected == "antinuke":
             desc = (
-                f"<a:dev:1528079861283946538> **ANTINUKE & CYBER DEFENSE MATRIX**\n\n"
-                f"• **Command List**\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,emergencylockdown` • **[OWNER ONLY]** 1-s lockdown & role strip\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,unlockdown` • **[OWNER ONLY]** Lift emergency lockdown\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,security status` • View live anti-nuke & anti-raid status\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,whitelist add` • Add user/role/channel to whitelist\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,whitelist remove` • Remove entry from whitelist\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,whitelist list` • View current whitelisted entries\n"
-                f" └─ <:xliyo_arrow:1528079785123774676> `,audit` • View recent security audit logs\n\n"
-                f"🔗 **Links**\n"
-                f"[Invite Me](https://discord.com/api/oauth2/authorize?client_id=1534949562383339660&permissions=8&scope=bot%20applications.commands) | "
-                f"[Support Server](https://discord.gg/joyst) | "
-                f"[Website](https://syphon-security-bot.onrender.com)"
+                f"# SYPHON SECURITY Antinuke Module\n\n"
+                f"{dot} **Protect your server from malicious raids and nukes.**\n"
+                f"{dot} **Secure all channels, roles, and server configurations.**\n"
+                f"{dot} **Current Status:** ✅\n\n"
+                f"__**Antinuke Commands**__\n\n"
+                f"{dot} **To Enable Antinuke, Use -** `,antinuke enable`\n"
+                f"{dot} **To Disable Antinuke, Use -** `,antinuke disable`\n"
+                f"{dot} **To Lock Server, Use -** `,emergencylockdown`\n"
+                f"{dot} **To Lift Lockdown, Use -** `,unlockdown`\n"
+                f"{dot} **To View Status, Use -** `,security status`\n"
+                f"{dot} **To Add Whitelist, Use -** `,whitelist add <@user>`\n"
+                f"{dot} **To Remove Whitelist, Use -** `,whitelist remove <@user>`\n"
+                f"{dot} **To View Audit Logs, Use -** `,audit`"
             )
             embed = joyst_embed(description=desc, color=COLOR_DANGER, guild=guild)
 
         elif selected == "moderation":
             desc = (
-                f"<:zzz_banned:1534236096781619252> **MODERATION & ENFORCEMENT ENGINE**\n\n"
-                f"• **Command List**\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,ban` • Ban a member from the server\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,tempban` • Temporarily ban a user (e.g. `,tempban @user 7d`)\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,kick` • Kick a member from the server\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,timeout` • Apply or remove member timeout\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,purge` • Bulk clean text channel messages\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,warn` • Issue an official warning to a member\n"
-                f" └─ <:xliyo_arrow:1528079785123774676> `,say` • **[HIDDEN ADMIN]** Repeat message directly as bot\n\n"
-                f"🔗 **Links**\n"
-                f"[Invite Me](https://discord.com/api/oauth2/authorize?client_id=1534949562383339660&permissions=8&scope=bot%20applications.commands) | "
-                f"[Support Server](https://discord.gg/joyst) | "
-                f"[Website](https://syphon-security-bot.onrender.com)"
+                f"# SYPHON SECURITY Moderation Module\n\n"
+                f"{dot} **Advanced server moderation and user enforcement tools.**\n"
+                f"{dot} **Execute fast bans, kicks, timeouts, and warning logs.**\n\n"
+                f"__**Moderation Commands**__\n\n"
+                f"{dot} **To Ban Member, Use -** `,ban <@user> [reason]`\n"
+                f"{dot} **To Tempban Member, Use -** `,tempban <@user> <time>`\n"
+                f"{dot} **To Kick Member, Use -** `,kick <@user> [reason]`\n"
+                f"{dot} **To Timeout Member, Use -** `,timeout <@user> <time>`\n"
+                f"{dot} **To Purge Messages, Use -** `,purge <amount>`\n"
+                f"{dot} **To Warn Member, Use -** `,warn <@user> [reason]`\n"
+                f"{dot} **To Say Message, Use -** `,say <text>`"
             )
             embed = joyst_embed(description=desc, color=COLOR_PURPLE, guild=guild)
 
         elif selected == "music":
             desc = (
-                f"<a:Playing_Audio:1534236884639944705> **HI-FI MUSIC ENGINE MODULE**\n\n"
-                f"• **Command List**\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,play` • **[OPEN FOR ALL]** Play song or URL stream\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,skip` • **[STAFF ONLY]** Skip current playing track\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,stop` • **[STAFF ONLY]** Clear queue & disconnect VC\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,loop` • **[STAFF ONLY]** Toggle Track or Queue loop\n"
-                f" └─ <:xliyo_arrow:1528079785123774676> `,autoplay` • **[STAFF ONLY]** Toggle non-stop music autoplay\n\n"
-                f"🔗 **Links**\n"
-                f"[Invite Me](https://discord.com/api/oauth2/authorize?client_id=1534949562383339660&permissions=8&scope=bot%20applications.commands) | "
-                f"[Support Server](https://discord.gg/joyst) | "
-                f"[Website](https://syphon-security-bot.onrender.com)"
+                f"# SYPHON SECURITY Music Module\n\n"
+                f"{dot} **High-fidelity audio playback and queue management.**\n"
+                f"{dot} **Supports YouTube streams, Spotify links & autoplay.**\n\n"
+                f"__**Music Commands**__\n\n"
+                f"{dot} **To Play Track, Use -** `,play <query/url>`\n"
+                f"{dot} **To Skip Track, Use -** `,skip`\n"
+                f"{dot} **To Stop & Disconnect, Use -** `,stop`\n"
+                f"{dot} **To Toggle Loop, Use -** `,loop`\n"
+                f"{dot} **To Toggle Autoplay, Use -** `,autoplay`"
             )
             embed = joyst_embed(description=desc, color=COLOR_INFO, guild=guild)
 
         elif selected == "ticket":
             desc = (
-                f"<a:question1:1534236585456046274> **SUPPORT TICKET SYSTEM MODULE**\n\n"
-                f"• **Command List**\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,ticket setup` • Deploy interactive **📩 Support Ticket Panel**\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,close` • Close current support ticket channel\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> **Claim Ticket** • Staff claim & handle private ticket\n"
-                f" └─ <:xliyo_arrow:1528079785123774676> **Transcript Export** • Save and export 200-message chat log\n\n"
-                f"🔗 **Links**\n"
-                f"[Invite Me](https://discord.com/api/oauth2/authorize?client_id=1534949562383339660&permissions=8&scope=bot%20applications.commands) | "
-                f"[Support Server](https://discord.gg/joyst) | "
-                f"[Website](https://syphon-security-bot.onrender.com)"
+                f"# SYPHON SECURITY Support Ticket Module\n\n"
+                f"{dot} **Private ticket creation with automated claim system.**\n"
+                f"{dot} **Full 200-message transcript export support.**\n\n"
+                f"__**Ticket Commands**__\n\n"
+                f"{dot} **To Setup Panel, Use -** `,ticket setup`\n"
+                f"{dot} **To Close Ticket, Use -** `,close`\n"
+                f"{dot} **To Claim Ticket, Click -** `[Claim Ticket] Button`"
             )
             embed = joyst_embed(description=desc, color=COLOR_SUCCESS, guild=guild)
 
         elif selected == "giveaway":
             desc = (
-                f"<a:settings:1528080056620941362> **GIVEAWAY MANAGER MODULE**\n\n"
-                f"• **Command List**\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `/giveaway start` • Deploy interactive giveaway with entry buttons\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `/giveaway reroll` • Pick a new winner for an active/ended giveaway\n"
-                f" └─ <:xliyo_arrow:1528079785123774676> `/giveaway end` • Force end giveaway immediately\n\n"
-                f"🔗 **Links**\n"
-                f"[Invite Me](https://discord.com/api/oauth2/authorize?client_id=1534949562383339660&permissions=8&scope=bot%20applications.commands) | "
-                f"[Support Server](https://discord.gg/joyst) | "
-                f"[Website](https://syphon-security-bot.onrender.com)"
+                f"# SYPHON SECURITY Giveaway Manager Module\n\n"
+                f"{dot} **Interactive giveaway panel with live entry tracking.**\n"
+                f"{dot} **Auto-winner selection and manual reroll engine.**\n\n"
+                f"__**Giveaway Commands**__\n\n"
+                f"{dot} **To Start Giveaway, Use -** `/giveaway start`\n"
+                f"{dot} **To Reroll Winner, Use -** `/giveaway reroll`\n"
+                f"{dot} **To Force End, Use -** `/giveaway end`"
             )
             embed = joyst_embed(description=desc, color=COLOR_WARNING, guild=guild)
 
         elif selected == "voice_tts":
             desc = (
-                f"<a:bots:1534236795187888178> **VOICE & TTS SPEECH ENGINE**\n\n"
-                f"• **Command List**\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,tts <text>` • Convert text to natural speech audio stream in VC\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,247` • Toggle 24/7 permanent Voice Channel connection\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,ttsauto` • Auto-read channel text messages into VC\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,join` • Connect bot to your current voice channel\n"
-                f" └─ <:xliyo_arrow:1528079785123774676> `,leave` • Disconnect bot from voice channel\n\n"
-                f"🔗 **Links**\n"
-                f"[Invite Me](https://discord.com/api/oauth2/authorize?client_id=1534949562383339660&permissions=8&scope=bot%20applications.commands) | "
-                f"[Support Server](https://discord.gg/joyst) | "
-                f"[Website](https://syphon-security-bot.onrender.com)"
+                f"# SYPHON SECURITY Voice & TTS Module\n\n"
+                f"{dot} **Natural speech text-to-speech audio reader in VC.**\n"
+                f"{dot} **Permanent 24/7 Voice Channel connection engine.**\n\n"
+                f"__**Voice & TTS Commands**__\n\n"
+                f"{dot} **To Speak TTS, Use -** `,tts <text>`\n"
+                f"{dot} **To Toggle 24/7 VC, Use -** `,247`\n"
+                f"{dot} **To Toggle Auto-TTS, Use -** `,ttsauto`\n"
+                f"{dot} **To Join VC, Use -** `,join`\n"
+                f"{dot} **To Leave VC, Use -** `,leave`"
             )
             embed = joyst_embed(description=desc, color=COLOR_INFO, guild=guild)
 
         elif selected == "stats_tempvc":
             desc = (
-                f"<a:Green_Loading:1534236460163661976> **SERVER STATS & TEMP VC GENERATOR**\n\n"
-                f"• **Command List**\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,stats setup` • Deploy live member counter voice channel (`👥 Total Members: X`)\n"
-                f" └─ <:xliyo_arrow:1528079785123774676> `,tempvc setup` • Deploy dynamic **➕ Join to Create** private VC generator\n\n"
-                f"🔗 **Links**\n"
-                f"[Invite Me](https://discord.com/api/oauth2/authorize?client_id=1534949562383339660&permissions=8&scope=bot%20applications.commands) | "
-                f"[Support Server](https://discord.gg/joyst) | "
-                f"[Website](https://syphon-security-bot.onrender.com)"
+                f"# SYPHON SECURITY Stats & TempVC Module\n\n"
+                f"{dot} **Live updating member counter voice channels.**\n"
+                f"{dot} **Dynamic Join to Create private VC generator.**\n\n"
+                f"__**Stats & TempVC Commands**__\n\n"
+                f"{dot} **To Setup Stats Counter, Use -** `,stats setup`\n"
+                f"{dot} **To Setup Temp VC Generator, Use -** `,tempvc setup`"
             )
             embed = joyst_embed(description=desc, color=COLOR_SUCCESS, guild=guild)
 
         elif selected == "utilities":
             desc = (
-                f"<:RainyMM_info:1534236695854055546> **UTILITIES & SYSTEM INFO ENGINE**\n\n"
-                f"• **Command List**\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,ping` • View WebSocket, Discord API & Database Latency\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,botinfo` • View bot RAM allocation, CPU load & VPS health\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,serverinfo` • View detailed server stats & member breakdown\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,uptime` • View continuous online uptime tracker\n"
-                f" ├─ <:xliyo_arrow:1528079785123774676> `,userinfo` • View user account creation & permissions\n"
-                f" └─ <:xliyo_arrow:1528079785123774676> `,weather` • View live weather temperature & forecast\n\n"
-                f"🔗 **Links**\n"
-                f"[Invite Me](https://discord.com/api/oauth2/authorize?client_id=1534949562383339660&permissions=8&scope=bot%20applications.commands) | "
-                f"[Support Server](https://discord.gg/joyst) | "
-                f"[Website](https://syphon-security-bot.onrender.com)"
+                f"# SYPHON SECURITY Utility Module\n\n"
+                f"{dot} **Comprehensive server info, latency & VPS diagnostic tools.**\n\n"
+                f"__**Utility Commands**__\n\n"
+                f"{dot} **To View Latency, Use -** `,ping`\n"
+                f"{dot} **To View Bot Info, Use -** `,botinfo`\n"
+                f"{dot} **To View Server Info, Use -** `,serverinfo`\n"
+                f"{dot} **To View Uptime, Use -** `,uptime`\n"
+                f"{dot} **To View User Info, Use -** `,userinfo`\n"
+                f"{dot} **To View Weather, Use -** `,weather`"
             )
             embed = joyst_embed(description=desc, color=COLOR_INFO, guild=guild)
 
@@ -187,6 +172,8 @@ class AdvancedHelpView(discord.ui.View):
         super().__init__(timeout=180)
         self.invoker = invoker
         self.add_item(HelpDropdown(guild))
+        self.add_item(discord.ui.Button(label="Invite Me", url="https://discord.com/api/oauth2/authorize?client_id=1534949562383339660&permissions=8&scope=bot%20applications.commands", emoji="🔗"))
+        self.add_item(discord.ui.Button(label="Support Server", url="https://discord.gg/joyst", emoji="💬"))
 
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.invoker.id and not is_admin_or_owner(interaction):
@@ -202,27 +189,54 @@ class SecurityCmd(commands.Cog):
         guild = ctx_or_interaction.guild
         settings = db.get_guild_settings(str(guild.id))
 
-        status_anti_nuke = f"{get_emoji('online', guild)} Enabled" if settings.get("anti_nuke", 1) else f"{get_emoji('offline', guild)} Disabled"
-        status_anti_raid = f"{get_emoji('online', guild)} Enabled" if settings.get("anti_raid", 1) else f"{get_emoji('offline', guild)} Disabled"
-        status_anti_spam = f"{get_emoji('online', guild)} Enabled" if settings.get("anti_spam", 1) else f"{get_emoji('offline', guild)} Disabled"
-        status_anti_invite = f"{get_emoji('online', guild)} Enabled" if settings.get("anti_invite", 1) else f"{get_emoji('offline', guild)} Disabled"
-        
+        e_tick = get_emoji("CB_greentick", guild)
+        e_cross = get_emoji("Cross_", guild)
+        dot = get_emoji("black_dot", guild)
+
+        is_nuke_on = bool(settings.get("anti_nuke", 0))
+
+        st_nuke = e_tick if is_nuke_on else e_cross
+        st_role = e_tick if is_nuke_on else e_cross
+        st_channel = e_tick if is_nuke_on else e_cross
+        st_webhook = e_tick if is_nuke_on else e_cross
+        st_botadd = e_tick if is_nuke_on else e_cross
+        st_vanity = e_tick if is_nuke_on else e_cross
+        st_emoji = e_tick if is_nuke_on else e_cross
+        st_prune = e_tick if is_nuke_on else e_cross
+        st_mention = e_tick if is_nuke_on else e_cross
+
+        whitelists = db.get_whitelists(str(guild.id))
+        wl_count = len(whitelists)
+
         log_ch_id = settings.get("log_channel_id")
         log_ch_str = f"<#{log_ch_id}>" if log_ch_id else "`#joyst-security-logs`"
 
         desc = (
-            f"🛡️ **{config.SERVER_NAME} Security Matrix Status**\n\n"
-            f"• **Anti-Nuke Protection:** {status_anti_nuke}\n"
-            f"• **Anti-Raid / Bot Guard:** {status_anti_raid}\n"
-            f"• **Anti-Spam & Phishing Filter:** {status_anti_spam}\n"
-            f"• **Anti-Invite Link Filter:** {status_anti_invite}\n"
-            f"• **Dedicated Log Channel:** {log_ch_str}\n"
-            f"• **Nuke Action Mode:** `{settings.get('action_on_nuke', 'quarantine').upper()}`"
+            f"# SYPHON SECURITY System Status\n\n"
+            f"{dot} **Overall Defense Matrix:** {'`100% ULTRA HARDENED`' if is_nuke_on else '`ARMOR DISABLED`'}\n"
+            f"{dot} **Whitelisted Entities:** `{wl_count}` whitelisted accounts\n"
+            f"{dot} **Security Audit Channel:** {log_ch_str}\n"
+            f"{dot} **Enforcement Action:** `INSTANT BAN & REVERT`\n\n"
+            f"__**Active Defense Modules**__\n\n"
+            f"{dot} **Anti-Nuke System Core:** {st_nuke}\n"
+            f"{dot} **Ban & Kick Protection:** {st_nuke}\n"
+            f"{dot} **Role Permission Security:** {st_role}\n"
+            f"{dot} **Channel Creation/Deletion Guard:** {st_channel}\n"
+            f"{dot} **Webhook Security Safeguard:** {st_webhook}\n"
+            f"{dot} **Unwhitelisted Bot Add Protection:** {st_botadd}\n"
+            f"{dot} **Vanity URL Protection:** {st_vanity}\n"
+            f"{dot} **Emoji & Sticker Protection:** {st_emoji}\n"
+            f"{dot} **Member Prune Prevention:** {st_prune}\n"
+            f"{dot} **@everyone / @here Raid Protection:** {st_mention}\n"
+            f"{dot} **Integration Safeguard:** {st_nuke}\n"
+            f"{dot} **SYPHON Wall Protection:** {st_nuke}\n\n"
+            f"💡 *Use `,antinuke enable` to toggle defenses.*"
         )
-        embed = joyst_embed(description=desc, color=COLOR_INFO, guild=guild)
+
+        embed = joyst_embed(description=desc, color=COLOR_SUCCESS if is_nuke_on else COLOR_DANGER, guild=guild)
 
         if isinstance(ctx_or_interaction, discord.Interaction):
-            await ctx_or_interaction.response.send_message(embed=embed, ephemeral=True)
+            await ctx_or_interaction.response.send_message(embed=embed, ephemeral=False)
         else:
             await ctx_or_interaction.send(embed=embed)
 
@@ -312,35 +326,43 @@ class SecurityCmd(commands.Cog):
 
         bot_user = self.bot.user
         bot_avatar = bot_user.display_avatar.url
+        latency_ms = round(self.bot.latency * 1000)
+        dot = get_emoji("black_dot", guild)
+
+        e_antinuke = get_emoji("antinuke", guild)
+        e_ban = get_emoji("zzz_banned", guild)
+        e_settings = get_emoji("9093settings", guild)
+        e_music = get_emoji("Playing_Audio", guild)
+        e_ticket = get_emoji("question1", guild)
+        e_giveaway = get_emoji("Giveaway86", guild)
+        e_voice = get_emoji("bots", guild)
+        e_stats = get_emoji("Green_Loading", guild)
+        e_util = get_emoji("dev", guild)
 
         desc = (
-            f"**Hey , I'm SYPHON SECURITY** <a:dev:1528079861283946538>\n"
-            f"A powerful multipurpose bot with Fastest Antinuke & Cyber Protection\n\n"
-            f"• **My Prefix Is :** `,`\n"
-            f"• **Total Commands :** `68+`\n\n"
-            f"• **Choose a Specific Module of your Desire**\n"
-            f" ├─ <:xliyo_arrow:1528079785123774676> **Antinuke**\n"
-            f" ├─ <:xliyo_arrow:1528079785123774676> **Moderation**\n"
-            f" ├─ <:xliyo_arrow:1528079785123774676> **Music**\n"
-            f" ├─ <:xliyo_arrow:1528079785123774676> **Ticket**\n"
-            f" ├─ <:xliyo_arrow:1528079785123774676> **Giveaway**\n"
-            f" ├─ <:xliyo_arrow:1528079785123774676> **Voice & TTS**\n"
-            f" ├─ <:xliyo_arrow:1528079785123774676> **Stats & TempVC**\n"
-            f" └─ <:xliyo_arrow:1528079785123774676> **Utility**\n\n"
-            f"🔗 **Links**\n"
-            f"[Invite Me](https://discord.com/api/oauth2/authorize?client_id=1534949562383339660&permissions=8&scope=bot%20applications.commands) | "
-            f"[Support Server](https://discord.gg/joyst) | "
-            f"[Website](https://syphon-security-bot.onrender.com)"
+            f"### SYPHON SECURITY Help Menu\n\n"
+            f"{dot} **Prefix for this server:** `,`\n"
+            f"{dot} **Total Commands:** `68`\n"
+            f"{dot} **Ping:** `{latency_ms}ms`\n\n"
+            f"{e_antinuke} : **Antinuke**\n"
+            f"{e_ban} : **Moderation**\n"
+            f"{e_settings} : **Automod**\n"
+            f"{e_music} : **Music**\n"
+            f"{e_ticket} : **Ticket**\n"
+            f"{e_giveaway} : **Giveaway**\n"
+            f"{e_voice} : **Voice & TTS**\n"
+            f"{e_stats} : **Stats & TempVC**\n"
+            f"{e_util} : **Utility**"
         )
 
         embed = joyst_embed(description=desc, color=COLOR_DARK, guild=guild)
         embed.set_thumbnail(url=bot_avatar)
-        embed.set_footer(text=f"Powered By SYPHON SECURITY OS | Designed for {guild.name}", icon_url=guild.icon.url if guild.icon else None)
+        embed.set_footer(text=f"Powered By SYPHON SECURITY Development", icon_url=guild.icon.url if guild.icon else None)
 
         view = AdvancedHelpView(guild, user)
 
         if isinstance(ctx_or_interaction, discord.Interaction):
-            await ctx_or_interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+            await ctx_or_interaction.response.send_message(embed=embed, view=view, ephemeral=False)
         else:
             await ctx_or_interaction.send(embed=embed, view=view)
 
@@ -682,4 +704,8 @@ class SecurityCmd(commands.Cog):
         await self._do_serverinfo(interaction)
 
 async def setup(bot):
+    try:
+        bot.remove_command("help")
+    except Exception:
+        pass
     await bot.add_cog(SecurityCmd(bot))
