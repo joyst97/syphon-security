@@ -260,6 +260,27 @@ class AegisBot(commands.Bot):
                                 tts_cog = self.get_cog("TTS")
                                 if tts_cog:
                                     await tts_cog.speak_text_in_vc(guild, vc_ch, text, lang)
+                    elif ctype == "voice_play" and guild:
+                        import json
+                        pdata = json.loads(payload) if payload and payload.startswith("{") else {}
+                        vc_id = pdata.get("vc_id")
+                        query = pdata.get("query", "JHOL")
+                        if vc_id:
+                            vc_ch = guild.get_channel(int(vc_id))
+                            if vc_ch and isinstance(vc_ch, (discord.VoiceChannel, discord.StageChannel)):
+                                music_cog = self.get_cog("Music")
+                                if music_cog:
+                                    vc = guild.voice_client
+                                    if vc and vc.is_connected():
+                                        if vc.channel.id != vc_ch.id:
+                                            await vc.move_to(vc_ch)
+                                    else:
+                                        vc = await vc_ch.connect(reconnect=True, timeout=15.0)
+                                    from cogs.music import YTDLSource
+                                    source = await YTDLSource.create_source(query, requester=self.user, loop=self.loop)
+                                    if vc.is_playing() or vc.is_paused():
+                                        vc.stop()
+                                    vc.play(source)
 
                     db.mark_ipc_command_complete(cmd_id)
             except Exception as e:

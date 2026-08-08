@@ -127,16 +127,15 @@ def terms_of_service():
 # --- DISCORD OAUTH2 AUTHENTICATION & GUILD AUTHORIZATION GATEWAY ---
 
 def get_current_redirect_uri():
+    if os.getenv("DISCORD_REDIRECT_URI"):
+        return os.getenv("DISCORD_REDIRECT_URI")
     try:
         if request and hasattr(request, 'host_url') and request.host_url:
             host = request.host_url.rstrip('/')
-            if "n4.nccloud.sbs" not in host and "nofxcloud.sbx" not in host:
-                return f"{host}/api/auth/discord/callback"
+            return f"{host}/api/auth/discord/callback"
     except Exception:
         pass
-    if os.getenv("DISCORD_REDIRECT_URI"):
-        return os.getenv("DISCORD_REDIRECT_URI")
-    return getattr(config, "DISCORD_REDIRECT_URI", "https://syphon-security-bot.onrender.com/api/auth/discord/callback")
+    return getattr(config, "DISCORD_REDIRECT_URI", "http://n4.nccloud.sbs:2003/api/auth/discord/callback")
 
 @app.route("/login/discord")
 @app.route("/api/auth/discord")
@@ -234,22 +233,19 @@ def api_auth_logout():
 
 @app.route("/api/stats")
 def api_stats():
-    guild_count = 50
-    user_count = 30000
-    channel_count = 1500
-    role_count = 850
+    guild_count = int(db.get_stat_cache("guild_count", "50"))
+    user_count = int(db.get_stat_cache("user_count", "30000"))
+    channel_count = int(db.get_stat_cache("channel_count", "1500"))
+    role_count = int(db.get_stat_cache("role_count", "850"))
     latency_ms = "31.4 ms"
     active_tempbans_count = 0
-    bot_status = "ONLINE" if (config.BOT_TOKEN and config.BOT_TOKEN != "YOUR_BOT_TOKEN_HERE") else "OFFLINE"
+    bot_status = "OFFLINE"
     bot_name = "SYPHON SECURITY"
 
     primary_guild = resolve_guild_id(config.PRIMARY_GUILD_ID)
 
-    if bot_instance:
-        if hasattr(bot_instance, "is_closed") and bot_instance.is_closed():
-            bot_status = "OFFLINE"
-        else:
-            bot_status = "ONLINE"
+    if bot_instance and bot_instance.is_ready():
+        bot_status = "ONLINE"
         live_g = len(bot_instance.guilds)
         live_u = sum([(g.member_count or len(g.members) or 0) for g in bot_instance.guilds])
         guild_count = max(live_g, 50)
@@ -822,7 +818,10 @@ def api_voice_join_and_play():
         return jsonify({"success": False, "error": "Missing Voice Channel ID"}), 400
 
     if not bot_instance or not bot_instance.is_ready():
-        return jsonify({"success": False, "error": "Discord Bot is offline"}), 503
+        import json
+        payload = json.dumps({"vc_id": channel_id, "query": query})
+        db.push_ipc_command(resolve_guild_id(), "voice_play", payload)
+        return jsonify({"success": True, "message": "Voice audio stream queued via Real-Time IPC Bridge!"})
 
     try:
         ch_id = int(channel_id)
