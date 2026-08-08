@@ -689,7 +689,9 @@ function fetchStats() {
             const latVal = document.getElementById('latencyVal');
             if (latVal) latVal.innerText = data.latency || '--';
 
-            const formattedUsers = (data.users || 11003).toLocaleString();
+            const totalUsers = data.users !== undefined ? Number(data.users) : 0;
+            const totalGuilds = data.guilds !== undefined ? Number(data.guilds) : 0;
+            const formattedUsers = totalUsers.toLocaleString();
 
             const usersEl = document.getElementById('usersCount');
             if (usersEl) usersEl.innerText = formattedUsers;
@@ -698,13 +700,10 @@ function fetchStats() {
             if (statUsersLanding) statUsersLanding.innerText = `${formattedUsers}+`;
 
             const statGuildsLanding = document.getElementById('statGuilds');
-            if (statGuildsLanding) statGuildsLanding.innerText = `${data.guilds || 3} Server${(data.guilds || 3) > 1 ? 's' : ''}`;
+            if (statGuildsLanding) statGuildsLanding.innerText = `${totalGuilds} Server${totalGuilds !== 1 ? 's' : ''}`;
 
             const guildsEl = document.getElementById('guildsCount');
-            if (guildsEl) guildsEl.innerText = data.guilds || 3;
-
-            const headerMemberCount = document.getElementById('headerMemberCount');
-            if (headerMemberCount) headerMemberCount.innerText = `${formattedUsers} Members`;
+            if (guildsEl) guildsEl.innerText = totalGuilds;
 
             const communityTrustedText = document.getElementById('communityTrustedText');
             if (communityTrustedText) communityTrustedText.innerText = `TRUSTED BY ${formattedUsers}+ MEMBERS ACROSS DISCORD COMMUNITIES`;

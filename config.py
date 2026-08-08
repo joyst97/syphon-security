@@ -8,7 +8,7 @@ load_dotenv(override=True)
 BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
 DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID", "1534949562383339660")
 DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET", "wP02j11URduSGApEmF0p2N3enV7GPvnT")
-DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI", "http://n4.nccloud.sbs:2003/api/auth/discord/callback")
+DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI", "")
 
 # Server & Channel Settings
 SERVER_NAME = os.getenv("SERVER_NAME", "JOYST CORPORATION")

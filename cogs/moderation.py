@@ -589,7 +589,167 @@ class Moderation(commands.Cog):
         except Exception as e:
             await self._reply_embed(ctx, description=f"❌ Error: {e}", color=COLOR_DANGER)
 
+    # --- ROLE MANAGEMENT SYSTEM ---
+
+    async def _do_add_role(self, ctx_or_interaction, member: discord.Member, role: discord.Role, reason: str = None):
+        guild = ctx_or_interaction.guild
+        author = ctx_or_interaction.user if isinstance(ctx_or_interaction, discord.Interaction) else ctx_or_interaction.author
+        reason_str = reason or f"Role assigned by {author} via SYPHON SECURITY"
+
+        me = guild.me
+        if not me.guild_permissions.manage_roles:
+            embed = joyst_embed(description="❌ **Bot Error:** I lack `Manage Roles` permission to assign roles.", color=COLOR_DANGER, guild=guild)
+            return await self._reply_embed(ctx_or_interaction, embed=embed)
+
+        if role >= me.top_role:
+            embed = joyst_embed(
+                description=f"❌ **Role Hierarchy Error:** The role {role.mention} is higher than or equal to my highest role ({me.top_role.mention}). Move my bot role above **{role.name}** in Server Settings ➔ Roles.",
+                color=COLOR_DANGER,
+                guild=guild
+            )
+            return await self._reply_embed(ctx_or_interaction, embed=embed)
+
+        if author.id != guild.owner_id and role >= author.top_role:
+            embed = joyst_embed(
+                description=f"❌ **Permission Denied:** You cannot assign {role.mention} because it is higher than or equal to your highest role ({author.top_role.mention}).",
+                color=COLOR_DANGER,
+                guild=guild
+            )
+            return await self._reply_embed(ctx_or_interaction, embed=embed)
+
+        if role in member.roles:
+            embed = joyst_embed(
+                description=f"ℹ️ User {member.mention} already has the role {role.mention}.",
+                color=COLOR_WARNING,
+                guild=guild
+            )
+            return await self._reply_embed(ctx_or_interaction, embed=embed)
+
+        try:
+            await member.add_roles(role, reason=reason_str)
+            
+            e_tick = get_emoji("CB_greentick", guild)
+            embed = joyst_embed(
+                title=f"{e_tick} ROLE ASSIGNED SUCCESSFULLY • {guild.name}",
+                description=f"Successfully granted role {role.mention} to {member.mention}!",
+                color=COLOR_SUCCESS,
+                guild=guild,
+                fields=[
+                    {"name": "👤 Target Member", "value": f"{member.mention} (`{member.id}`)", "inline": True},
+                    {"name": "🛡️ Role Granted", "value": f"{role.mention} (`{role.id}`)", "inline": True},
+                    {"name": "👮 Action By", "value": f"{author.mention} (`{author.id}`)", "inline": True},
+                    {"name": "🎨 Role Color", "value": f"`{str(role.color)}`", "inline": True},
+                    {"name": "👥 Total Members", "value": f"`{len(role.members)} members`", "inline": True}
+                ]
+            )
+            await self._reply_embed(ctx_or_interaction, embed=embed)
+            db.add_audit_log(str(guild.id), "ROLE_ADD", f"Assigned role {role.name} ({role.id}) to member {member} ({member.id}).", str(author.id), str(author), "LOW")
+
+        except Exception as e:
+            embed = joyst_embed(description=f"❌ Failed to assign role {role.mention}: {e}", color=COLOR_DANGER, guild=guild)
+            await self._reply_embed(ctx_or_interaction, embed=embed)
+
+    async def _do_remove_role(self, ctx_or_interaction, member: discord.Member, role: discord.Role, reason: str = None):
+        guild = ctx_or_interaction.guild
+        author = ctx_or_interaction.user if isinstance(ctx_or_interaction, discord.Interaction) else ctx_or_interaction.author
+        reason_str = reason or f"Role removed by {author} via SYPHON SECURITY"
+
+        me = guild.me
+        if not me.guild_permissions.manage_roles:
+            embed = joyst_embed(description="❌ **Bot Error:** I lack `Manage Roles` permission to remove roles.", color=COLOR_DANGER, guild=guild)
+            return await self._reply_embed(ctx_or_interaction, embed=embed)
+
+        if role >= me.top_role:
+            embed = joyst_embed(
+                description=f"❌ **Role Hierarchy Error:** The role {role.mention} is higher than or equal to my highest role ({me.top_role.mention}).",
+                color=COLOR_DANGER,
+                guild=guild
+            )
+            return await self._reply_embed(ctx_or_interaction, embed=embed)
+
+        if author.id != guild.owner_id and role >= author.top_role:
+            embed = joyst_embed(
+                description=f"❌ **Permission Denied:** You cannot remove {role.mention} because it is higher than or equal to your highest role ({author.top_role.mention}).",
+                color=COLOR_DANGER,
+                guild=guild
+            )
+            return await self._reply_embed(ctx_or_interaction, embed=embed)
+
+        if role not in member.roles:
+            embed = joyst_embed(
+                description=f"ℹ️ User {member.mention} does not have the role {role.mention}.",
+                color=COLOR_WARNING,
+                guild=guild
+            )
+            return await self._reply_embed(ctx_or_interaction, embed=embed)
+
+        try:
+            await member.remove_roles(role, reason=reason_str)
+            
+            e_cross = get_emoji("Cross_", guild)
+            embed = joyst_embed(
+                title=f"{e_cross} ROLE REVOKED SUCCESSFULLY • {guild.name}",
+                description=f"Successfully removed role {role.mention} from {member.mention}!",
+                color=COLOR_DANGER,
+                guild=guild,
+                fields=[
+                    {"name": "👤 Target Member", "value": f"{member.mention} (`{member.id}`)", "inline": True},
+                    {"name": "🔇 Role Revoked", "value": f"{role.mention} (`{role.id}`)", "inline": True},
+                    {"name": "👮 Action By", "value": f"{author.mention} (`{author.id}`)", "inline": True}
+                ]
+            )
+            await self._reply_embed(ctx_or_interaction, embed=embed)
+            db.add_audit_log(str(guild.id), "ROLE_REMOVE", f"Removed role {role.name} ({role.id}) from member {member} ({member.id}).", str(author.id), str(author), "LOW")
+
+        except Exception as e:
+            embed = joyst_embed(description=f"❌ Failed to remove role {role.mention}: {e}", color=COLOR_DANGER, guild=guild)
+            await self._reply_embed(ctx_or_interaction, embed=embed)
+
+    @commands.command(name="addrole", aliases=["giverole", "radd"])
+    @commands.has_permissions(manage_roles=True)
+    async def prefix_addrole(self, ctx, member: discord.Member, role: discord.Role, *, reason: str = None):
+        """Grants a role to a member with hierarchy verification and clean embed log."""
+        await self._do_add_role(ctx, member, role, reason)
+
+    @commands.command(name="removerole", aliases=["takerole", "rremove"])
+    @commands.has_permissions(manage_roles=True)
+    async def prefix_removerole(self, ctx, member: discord.Member, role: discord.Role, *, reason: str = None):
+        """Revokes a role from a member with hierarchy verification and clean embed log."""
+        await self._do_remove_role(ctx, member, role, reason)
+
+    @commands.group(name="role", invoke_without_command=True)
+    @commands.has_permissions(manage_roles=True)
+    async def prefix_role(self, ctx):
+        dot = get_emoji("black_dot", ctx.guild)
+        desc = (
+            f"# 🛡️ SYPHON SECURITY Role Management Module\n\n"
+            f"{dot} **To Grant Role:** `,addrole @User @Role` or `,role add @User @Role`\n"
+            f"{dot} **To Revoke Role:** `,removerole @User @Role` or `,role remove @User @Role`"
+        )
+        embed = joyst_embed(description=desc, color=COLOR_PURPLE, guild=ctx.guild)
+        await ctx.send(embed=embed)
+
+    @prefix_role.command(name="add")
+    @commands.has_permissions(manage_roles=True)
+    async def prefix_role_add(self, ctx, member: discord.Member, role: discord.Role, *, reason: str = None):
+        await self._do_add_role(ctx, member, role, reason)
+
+    @prefix_role.command(name="remove")
+    @commands.has_permissions(manage_roles=True)
+    async def prefix_role_remove(self, ctx, member: discord.Member, role: discord.Role, *, reason: str = None):
+        await self._do_remove_role(ctx, member, role, reason)
+
     # --- Slash Commands ---
+
+    @app_commands.command(name="addrole", description="Grant a role to a member")
+    @app_commands.checks.has_permissions(manage_roles=True)
+    async def slash_addrole(self, interaction: discord.Interaction, member: discord.Member, role: discord.Role, reason: str = None):
+        await self._do_add_role(interaction, member, role, reason)
+
+    @app_commands.command(name="removerole", description="Revoke a role from a member")
+    @app_commands.checks.has_permissions(manage_roles=True)
+    async def slash_removerole(self, interaction: discord.Interaction, member: discord.Member, role: discord.Role, reason: str = None):
+        await self._do_remove_role(interaction, member, role, reason)
 
     @app_commands.command(name="ban", description="Permanently ban a user from the server")
     @app_commands.checks.has_permissions(ban_members=True)

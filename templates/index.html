@@ -137,15 +137,14 @@
                     <div class="guild-avatar">
                         <img src="/static/images/logo.png" alt="Guild Icon" id="guildIconImg">
                         <span class="guild-online-dot"></span>
-                    </div>
-                    <div class="guild-details">
+                    <                    <div class="guild-details">
                         <div class="guild-title-row">
-                            <h1 id="guildNameText">Discord Server</h1>
+                            <h1 id="guildNameText">Managed Server</h1>
                             <span class="nitro-boost-badge"><i class="fa-solid fa-rocket"></i> LEVEL 3 BOOSTED</span>
                         </div>
                         <p class="guild-sub-text">
-                            <i class="fa-solid fa-id-card"></i> Server ID: <code id="guildIdCode">1265951470994329650</code> 
-                            • <i class="fa-solid fa-user-group text-cyan"></i> <span id="headerMemberCount">11,003 Members</span>
+                            <i class="fa-solid fa-id-card"></i> Server ID: <code id="guildIdCode">--</code> 
+                            • <i class="fa-solid fa-user-group text-cyan"></i> <span id="headerMemberCount">-- Members</span>
                         </p>
                     </div>
                 </div>
@@ -158,9 +157,9 @@
                     <div class="server-selector">
                         <i class="fa-solid fa-server text-purple"></i>
                         <select id="guildSelect" onchange="switchGuild(this.value)">
-                            <option value="1265951470994329650">ᒍOYST ᑕOᖇᑭOᖇᗩTIOᑎ 👺</option>
+                            <option value="">Select Managed Server...</option>
                         </select>
-                    </div>
+                    </div>                   </div>
 
                     <a href="/login/discord" class="btn btn-cyber" id="discordAuthBtn" style="background: linear-gradient(135deg, #5865F2, #404EED);">
                         <i class="fa-brands fa-discord"></i> <span id="discordAuthBtnText">Login with Discord</span>
