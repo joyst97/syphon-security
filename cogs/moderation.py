@@ -137,9 +137,10 @@ class Moderation(commands.Cog):
         elif isinstance(error, commands.CommandNotFound):
             pass # Ignore unknown command typos cleanly
 
-    async def _reply_embed(self, ctx_or_interaction, title: str = None, description: str = None, color=COLOR_DARK, ephemeral=False):
+    async def _reply_embed(self, ctx_or_interaction, title: str = None, description: str = None, color=COLOR_DARK, ephemeral=False, embed: discord.Embed = None):
         guild = ctx_or_interaction.guild if hasattr(ctx_or_interaction, "guild") else None
-        embed = joyst_embed(title=title, description=description, color=color, guild=guild)
+        if not embed:
+            embed = joyst_embed(title=title, description=description, color=color, guild=guild)
         if isinstance(ctx_or_interaction, discord.Interaction):
             if not ctx_or_interaction.response.is_done():
                 await ctx_or_interaction.response.send_message(embed=embed, ephemeral=ephemeral)
