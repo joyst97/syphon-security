@@ -13,9 +13,17 @@ from emojis import get_emoji
 logger = logging.getLogger("AEGIS.Moderation")
 
 def parse_duration(duration_str: str) -> int:
-    """Parses duration strings like 10s, 5m, 2h, 7d, 1w into total seconds."""
+    """Parses duration strings like 10s, 5m, 2h, 7d, 1w, 10mins, 2hours, 1day into total seconds."""
+    text = duration_str.strip().lower()
+    text = re.sub(r"\b(seconds?|secs?)\b", "s", text)
+    text = re.sub(r"\b(minutes?|mins?)\b", "m", text)
+    text = re.sub(r"\b(hours?|hrs?)\b", "h", text)
+    text = re.sub(r"\b(days?)\b", "d", text)
+    text = re.sub(r"\b(weeks?)\b", "w", text)
+    text = re.sub(r"\s+", "", text)
+
     regex = re.compile(r"^(?:(\d+)w)?(?:(\d+)d)?(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$")
-    match = regex.match(duration_str.strip().lower())
+    match = regex.match(text)
     if not match:
         return 0
 

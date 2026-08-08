@@ -381,7 +381,7 @@ class AutoMod(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if not message.guild or message.author.bot:
+        if not message.guild or message.author.bot or message.content.startswith(",") or message.content.startswith("/"):
             return
 
         guild = message.guild

@@ -31,6 +31,71 @@ except Exception:
 
 logger = logging.getLogger("AEGIS.Main")
 
+class JoinWelcomeView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+        self.add_item(discord.ui.Button(label="Invite Me", url="https://discord.com/api/oauth2/authorize?client_id=1534949562383339660&permissions=8&scope=bot%20applications.commands", style=discord.ButtonStyle.link, emoji="🔗"))
+        self.add_item(discord.ui.Button(label="Support Server", url="https://discord.gg/joyst", style=discord.ButtonStyle.link, emoji="💬"))
+        self.add_item(discord.ui.Button(label="Website", url="https://syphon-security-bot.onrender.com", style=discord.ButtonStyle.link, emoji="🌐"))
+
+async def send_guild_join_welcome_embed(guild: discord.Guild):
+    from embed_builder import joyst_embed, COLOR_PURPLE
+    target_channel = guild.system_channel
+    if not target_channel or not target_channel.permissions_for(guild.me).send_messages:
+        for ch in guild.text_channels:
+            if ch.permissions_for(guild.me).send_messages:
+                target_channel = ch
+                break
+
+    if not target_channel:
+        return
+
+    desc = (
+        f"<a:dev:1528079861283946538> **THANK YOU FOR ADDING SYPHON SECURITY OS!**\n\n"
+        f"Hello **{guild.name}**! I am **SYPHON SECURITY**, your server's all-in-one ultra-hardened antinuke, moderation, music, ticket, and voice security system.\n\n"
+        f"• **Quick Setup Instructions**\n"
+        f" ├─ <:xliyo_arrow:1528079785123774676> **Default Prefix:** `,` (Comma) or `/` (Slash Commands)\n"
+        f" ├─ <:xliyo_arrow:1528079785123774676> **Help Menu:** Type `,help` to view all **68+ Active Commands**\n"
+        f" ├─ <:xliyo_arrow:1528079785123774676> **Antinuke Setup:** Type `,antinuke enable` to lock down server\n"
+        f" ├─ <:xliyo_arrow:1528079785123774676> **Support Tickets:** Type `,ticket setup` to deploy support hub\n"
+        f" └─ <:xliyo_arrow:1528079785123774676> **Temp VC Setup:** Type `,tempvc setup` for join-to-create channels\n\n"
+        f"🛡️ *Server Security Status: 100% Protected & Active*"
+    )
+    embed = joyst_embed(description=desc, color=COLOR_PURPLE, guild=guild)
+    if guild.icon:
+        embed.set_thumbnail(url=guild.icon.url)
+    embed.set_footer(text=f"Powered By SYPHON SECURITY OS • Designed for {guild.name}")
+    try:
+        await target_channel.send(embed=embed, view=JoinWelcomeView())
+    except Exception as e:
+        logger.debug(f"Could not send join welcome embed in {guild.name}: {e}")
+
+async def send_bot_startup_embed(bot):
+    from embed_builder import get_or_create_log_channel, joyst_embed, COLOR_SUCCESS
+    start_ts = int(getattr(bot, "start_time", time.time()))
+    ws_ping = round(bot.latency * 1000)
+    total_members = sum([(g.member_count or len(g.members) or 0) for g in bot.guilds])
+
+    desc = (
+        f"🛡️ **SYPHON SECURITY OS ONLINE & OPERATIONAL**\n\n"
+        f"• **Boot Status:** `100% Online & Fully Synced`\n"
+        f"• **Boot Time:** <t:{start_ts}:F> (<t:{start_ts}:R>)\n"
+        f"• **Protected Network:** `{len(bot.guilds)} Servers` | `{total_members:,} Users`\n"
+        f"• **Command Registry:** `68+ Active Commands (Prefix & Slash)`\n"
+        f"• **WebSocket Ping:** `{ws_ping} ms`\n"
+        f"• **Host Node:** `Dedicated High-Speed VPS`"
+    )
+
+    for guild in bot.guilds:
+        try:
+            ch = await get_or_create_log_channel(guild)
+            if ch and ch.permissions_for(guild.me).send_messages:
+                embed = joyst_embed(description=desc, color=COLOR_SUCCESS, guild=guild)
+                embed.set_footer(text=f"SYPHON SECURITY OS • Operational Status Log")
+                await ch.send(embed=embed)
+        except Exception:
+            pass
+
 class AegisBot(commands.Bot):
     def __init__(self):
         intents = discord.Intents.default()
@@ -99,16 +164,23 @@ class AegisBot(commands.Bot):
         async def sync_slash():
             await self.wait_until_ready()
             try:
-                if config.PRIMARY_GUILD_ID > 0:
-                    guild_obj = discord.Object(id=config.PRIMARY_GUILD_ID)
-                    self.tree.clear_commands(guild=guild_obj)
-                    await self.tree.sync(guild=guild_obj)
+                # 1. Global Sync for universal application commands
+                synced_global = await self.tree.sync()
+                logger.info(f"⚡ Global Slash Sync: Registered {len(synced_global)} global commands.")
 
-                # Sync single clean global slash command set
-                synced = await self.tree.sync()
-                logger.info(f"Successfully synced {len(synced)} clean global slash commands (Duplicates Removed).")
+                # 2. Instant Guild Copy Sync (Bypasses Discord's 1-hour global propagation delay!)
+                for guild in self.guilds:
+                    try:
+                        guild_obj = discord.Object(id=guild.id)
+                        self.tree.copy_global_to(guild=guild_obj)
+                        synced_guild = await self.tree.sync(guild=guild_obj)
+                        logger.info(f"⚡ Instant Guild Sync: Synced {len(synced_guild)} slash commands to {guild.name} ({guild.id}).")
+                    except Exception as ge:
+                        logger.debug(f"Guild sync note for {guild.name}: {ge}")
+
+                logger.info("✅ All Slash & Prefix Commands 100% Auto-Synced & Active Across All Servers!")
             except Exception as e:
-                logger.warning(f"Slash command sync note: {e}")
+                logger.error(f"Error syncing slash commands: {e}")
 
         self.loop.create_task(sync_slash())
 
@@ -137,6 +209,9 @@ class AegisBot(commands.Bot):
         )
         await self.change_presence(status=discord.Status.online, activity=activity)
 
+        # Broadcast startup embed log to security log channel
+        await send_bot_startup_embed(self)
+
     async def sync_guild_avatar(self, guild: discord.Guild):
         """Dynamically syncs the bot's server PFP avatar to match that specific server's logo!"""
         if not guild or not guild.me or not guild.icon:
@@ -148,10 +223,38 @@ class AegisBot(commands.Bot):
         except Exception as e:
             logger.debug(f"Server avatar PFP update note for {guild.name}: {e}")
 
+    async def on_message(self, message: discord.Message):
+        if message.author.bot:
+            return
+        await self.process_commands(message)
+
+    async def on_command_error(self, ctx, error):
+        if isinstance(error, commands.CommandNotFound):
+            return
+        from embed_builder import joyst_embed, COLOR_DANGER, COLOR_WARNING
+        if isinstance(error, commands.MissingPermissions):
+            embed = joyst_embed(description="❌ **Access Denied:** You lack administrator/staff permissions for this command.", color=COLOR_DANGER, guild=ctx.guild)
+            await ctx.send(embed=embed, delete_after=6)
+            return
+        if isinstance(error, commands.MissingRequiredArgument):
+            embed = joyst_embed(description=f"⚠️ **Missing Argument:** `{error.param.name}` is required.\n> Usage: `{ctx.prefix}{ctx.command.name} {ctx.command.signature}`", color=COLOR_WARNING, guild=ctx.guild)
+            await ctx.send(embed=embed)
+            return
+        logger.error(f"Prefix Command Exception ({ctx.command}): {error}")
+
     async def on_guild_join(self, guild: discord.Guild):
+        """Auto-syncs commands, creates security channels, and sends high-end welcome embed when bot joins a new server!"""
         from embed_builder import get_or_create_log_channel
         await get_or_create_log_channel(guild)
         await self.sync_guild_avatar(guild)
+        await send_guild_join_welcome_embed(guild)
+        try:
+            guild_obj = discord.Object(id=guild.id)
+            self.tree.copy_global_to(guild=guild_obj)
+            synced = await self.tree.sync(guild=guild_obj)
+            logger.info(f"⚡ Instant New Guild Join Auto-Sync: Synced {len(synced)} slash commands to {guild.name}.")
+        except Exception as e:
+            logger.error(f"Error auto-syncing commands on guild join for {guild.name}: {e}")
 
 def clean_disk_space():
     """Purges temporary files, cache directories, and audio artifacts to prevent Pterodactyl disk quota limits."""

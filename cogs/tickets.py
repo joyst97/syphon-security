@@ -139,7 +139,8 @@ class TicketCategorySelect(discord.ui.Select):
         )
 
     async def callback(self, interaction: discord.Interaction):
-        await interaction.response.defer(ephemeral=True)
+        if not interaction.response.is_done():
+            await interaction.response.defer(ephemeral=True)
         category_choice = self.values[0]
         guild = interaction.guild
         user = interaction.user
@@ -195,12 +196,14 @@ class TicketCategorySelect(discord.ui.Select):
             }
 
             welcome_desc = (
-                f"🎟️ **Welcome to {cat_titles.get(category_choice, 'Support')}!**\n\n"
-                f"Hello {user.mention}, thank you for reaching out to **{guild.name} Staff**!\n"
-                f"Please state your issue or request in detail below.\n\n"
-                f"• **🔒 Close Ticket:** End conversation & delete channel.\n"
-                f"• **📜 Claim Ticket:** Staff lock & assignment.\n"
-                f"• **📄 Transcript:** Export message transcript."
+                f"<a:dev:1528079861283946538> **TICKET CREATED • {cat_titles.get(category_choice, 'Support')}**\n\n"
+                f"Hello {user.mention}, thank you for reaching out to **{guild.name} Support Team**!\n"
+                f"Please state your inquiry or issue in detail below. A staff member will be with you shortly.\n\n"
+                f"• **Quick Controls**\n"
+                f" ├─ <:xliyo_arrow:1528079785123774676> 🔒 **Close Ticket:** End conversation & delete channel\n"
+                f" ├─ <:xliyo_arrow:1528079785123774676> 📜 **Claim Ticket:** Staff lock & assignment\n"
+                f" └─ <:xliyo_arrow:1528079785123774676> 📄 **Transcript:** Save chat transcript record\n\n"
+                f"⚡ *Response Time: ~2-5 Minutes*"
             )
 
             embed = joyst_embed(description=welcome_desc, color=COLOR_PURPLE, guild=guild)
@@ -231,19 +234,22 @@ class Tickets(commands.Cog):
         guild = ctx_or_interaction.guild
         channel = target_channel or ctx_or_interaction.channel
 
-        panel_title = title or f"👑 **{config.SERVER_NAME} Ticket King Support Hub**"
+        panel_title = title or f"📩 **{guild.name} • OFFICIAL SUPPORT SYSTEM**"
         panel_desc = description or (
-            f"Welcome to **{config.SERVER_NAME} Official Support Center**!\n\n"
-            f"Select your inquiry category from the dropdown menu below to open a private 1-on-1 support ticket with our team.\n\n"
-            f"• 🎫 **General Support:** Server help & general questions\n"
-            f"• 🛠️ **Technical:** Bug reports & bot setup assistance\n"
-            f"• 💎 **Billing & VIP:** Panel purchases & rank upgrades\n"
-            f"• 🛡️ **Appeals:** Report players or appeal mutes/bans\n"
-            f"• 🤝 **Partnerships:** Collabs & sponsorship deals"
+            f"<a:question1:1534236585456046274> **WELCOME TO {guild.name.upper()} SUPPORT HUB**\n\n"
+            f"Need assistance, have questions, or want to buy VPS/Panels? Select a category from the dropdown menu below to open a private 1-on-1 support channel with our senior staff.\n\n"
+            f"• **Available Categories**\n"
+            f" ├─ <:xliyo_arrow:1528079785123774676> 🎫 **General Support** • Server help & general questions\n"
+            f" ├─ <:xliyo_arrow:1528079785123774676> 🛠️ **Technical Support** • Bot errors & VPS setup\n"
+            f" ├─ <:xliyo_arrow:1528079785123774676> 💎 **Billing & Purchases** • VPS/Panel orders & VIP ranks\n"
+            f" ├─ <:xliyo_arrow:1528079785123774676> 🛡️ **Appeals & Reports** • Player report or ban appeals\n"
+            f" └─ <:xliyo_arrow:1528079785123774676> 🤝 **Partnerships** • Sponsorships & server collabs\n\n"
+            f"⚡ *Our support team responds within 5 minutes. Do not open spam tickets!*"
         )
 
         embed = joyst_embed(title=panel_title, description=panel_desc, color=COLOR_PURPLE, guild=guild)
-        embed.set_thumbnail(url=guild.icon.url if guild.icon else None)
+        if guild.icon:
+            embed.set_thumbnail(url=guild.icon.url)
         embed.set_footer(text=f"{config.SERVER_NAME} Ticket King OS • Select Category Below")
 
         view = TicketKingDropdownView()

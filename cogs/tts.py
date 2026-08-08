@@ -2,6 +2,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 import asyncio
+import re
 import urllib.parse
 import logging
 import shutil
@@ -12,6 +13,20 @@ from embed_builder import joyst_embed, COLOR_SUCCESS, COLOR_WARNING, COLOR_DANGE
 from emojis import get_emoji
 
 logger = logging.getLogger("AEGIS.TTS")
+
+EMOJI_REGEX = re.compile(r"<a?:\w+:\d+>", re.IGNORECASE)
+COLON_EMOJI_REGEX = re.compile(r":\w+:", re.IGNORECASE)
+URL_REGEX = re.compile(r"https?://\S+", re.IGNORECASE)
+
+def clean_tts_text(text: str) -> str:
+    """Strips animated emojis (<a:name:id>), static emojis (<:name:id>), raw colons (:name:), and URLs from TTS text."""
+    if not text:
+        return ""
+    text = EMOJI_REGEX.sub("", text)
+    text = COLON_EMOJI_REGEX.sub("", text)
+    text = URL_REGEX.sub("", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
 
 try:
     FFMPEG_PATH = shutil.which("ffmpeg") or "ffmpeg"
@@ -74,9 +89,13 @@ class AudioMixerSource(discord.AudioSource):
     def is_opus(self):
         return False
 
+from collections import defaultdict
+
 class TTS(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.tts_queues = defaultdict(asyncio.Queue)
+        self.queue_workers = {}
         self.reconnect_247_voice_task.start()
 
     def cog_unload(self):
@@ -119,47 +138,68 @@ class TTS(commands.Cog):
         await self.bot.wait_until_ready()
 
     async def speak_text_in_vc(self, guild: discord.Guild, channel: discord.VoiceChannel, text: str, lang: str = "en"):
-        """Utility to play TTS speech audio with Audio Ducking (Background Music lowered to 25%, TTS boosted to 150%)"""
+        """Utility to enqueue TTS speech audio so messages are read out loud sequentially without cutting off!"""
         try:
-            vc = guild.voice_client
-            if not vc or not vc.is_connected():
-                try:
-                    vc = await asyncio.wait_for(channel.connect(reconnect=True, self_deaf=True), timeout=10.0)
-                except Exception as ce:
-                    logger.error(f"Failed to connect to voice channel: {ce}")
-                    return False, f"Voice connect timeout: {ce}"
-            elif vc.channel != channel and not vc.is_playing():
-                await vc.move_to(channel)
-
-            lang_clean = lang.lower()
-            lang_code = "hi" if ("hi" in lang_clean or "hindi" in lang_clean) else "en"
-            if lang_clean in ["es", "spanish"]: lang_code = "es"
-            elif lang_clean in ["fr", "french"]: lang_code = "fr"
-            elif lang_clean in ["ja", "japanese"]: lang_code = "ja"
-
-            tts_url = f"https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl={lang_code}&q={urllib.parse.quote(text)}"
-            
-            ffmpeg_opts = {
-                "before_options": '-headers "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-                "options": "-vn"
-            }
-
-            source = discord.FFmpegPCMAudio(tts_url, executable=FFMPEG_PATH, **ffmpeg_opts)
-
-            if vc.is_playing():
-                # Seamless Live Audio Ducking Overlay (Music stays playing at 25%, TTS at 150%, Zero Delay)
-                existing_music = vc.source.music if isinstance(vc.source, AudioMixerSource) else vc.source
-                mixer = AudioMixerSource(existing_music, source, duck_volume=0.25, tts_volume=1.5)
-                vc.source = mixer
-                logger.info(f"Ducked music volume to 25% & overlayed TTS speech at 150% in #{channel.name}")
-            else:
-                vc.play(source)
-
-            logger.info(f"Played TTS in #{channel.name}: '{text}' (lang={lang})")
-            return True, f"Speaking in #{channel.name}: '{text}'"
+            await self.tts_queues[guild.id].put((channel, text, lang))
+            if guild.id not in self.queue_workers or self.queue_workers[guild.id].done():
+                self.queue_workers[guild.id] = asyncio.create_task(self._process_tts_queue(guild))
+            return True, f"Queued speech in #{channel.name}"
         except Exception as e:
-            logger.error(f"TTS Error: {e}", exc_info=True)
+            logger.error(f"TTS Enqueue Error: {e}", exc_info=True)
             return False, str(e)
+
+    async def _process_tts_queue(self, guild: discord.Guild):
+        """Processes queued TTS messages sequentially in exact order (FIFO) so multiple speakers never cut each other off!"""
+        queue = self.tts_queues[guild.id]
+        while not queue.empty():
+            try:
+                channel, text, lang = await queue.get()
+                vc = guild.voice_client
+                if not vc or not vc.is_connected():
+                    try:
+                        vc = await asyncio.wait_for(channel.connect(reconnect=True, self_deaf=True), timeout=10.0)
+                    except Exception as ce:
+                        logger.error(f"Failed to connect to voice channel: {ce}")
+                        queue.task_done()
+                        continue
+                elif vc.channel != channel and not vc.is_playing():
+                    await vc.move_to(channel)
+
+                lang_clean = lang.lower()
+                lang_code = "hi" if ("hi" in lang_clean or "hindi" in lang_clean) else "en"
+                if lang_clean in ["es", "spanish"]: lang_code = "es"
+                elif lang_clean in ["fr", "french"]: lang_code = "fr"
+                elif lang_clean in ["ja", "japanese"]: lang_code = "ja"
+
+                tts_url = f"https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl={lang_code}&q={urllib.parse.quote(text)}"
+                ffmpeg_opts = {
+                    "before_options": '-headers "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)" -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
+                    "options": "-vn"
+                }
+
+                source = discord.FFmpegPCMAudio(tts_url, executable=FFMPEG_PATH, **ffmpeg_opts)
+
+                if vc.is_playing() and isinstance(vc.source, AudioMixerSource):
+                    existing_music = vc.source.music
+                    mixer = AudioMixerSource(existing_music, source, duck_volume=0.25, tts_volume=1.5)
+                    vc.source = mixer
+                elif vc.is_playing():
+                    existing_music = vc.source
+                    mixer = AudioMixerSource(existing_music, source, duck_volume=0.25, tts_volume=1.5)
+                    vc.source = mixer
+                else:
+                    vc.play(source)
+
+                logger.info(f"Playing queued TTS in {guild.name} #{channel.name}: '{text}'")
+
+                # Wait until active TTS audio speech finishes playing completely before popping next queued message!
+                while vc and vc.is_connected() and vc.is_playing():
+                    await asyncio.sleep(0.15)
+
+                queue.task_done()
+            except Exception as e:
+                logger.error(f"TTS Queue Processor Exception in {guild.name}: {e}")
+                await asyncio.sleep(0.2)
 
     async def play_sound_in_vc(self, guild: discord.Guild, channel: discord.VoiceChannel, sound_url: str):
         """Utility to play a soundboard audio clip with Audio Ducking"""
@@ -403,7 +443,9 @@ class TTS(commands.Cog):
         if auto_ch_id and str(message.channel.id) == auto_ch_id:
             vc = guild.voice_client
             if vc and vc.is_connected() and vc.channel:
-                clean_text = message.clean_content[:150]
+                clean_text = clean_tts_text(message.clean_content)[:150]
+                if not clean_text:
+                    return
                 speech = f"{message.author.display_name} says: {clean_text}"
                 lang = "hi" if any("\u0900" <= c <= "\u097F" for c in clean_text) else "en"
                 await self.speak_text_in_vc(guild, vc.channel, speech, lang)

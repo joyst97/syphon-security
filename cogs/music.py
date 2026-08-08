@@ -34,15 +34,16 @@ if os.path.exists(MUSIC_TEMP_DIR):
 
 # YTDL Options for Direct Web Audio Streaming (ZERO DISK DOWNLOAD, ZERO STORAGE USED)
 YTDL_OPTIONS = {
-    "format": "bestaudio/best",
+    "format": "ba[ext=m4a]/ba[ext=webm]/ba/b",
     "noplaylist": True,
     "nocheckcertificate": True,
     "ignoreerrors": False,
     "logtostderr": False,
     "quiet": True,
     "no_warnings": True,
-    "default_search": "ytsearch",
+    "default_search": "ytsearch1",
     "source_address": "0.0.0.0",
+    "skip_download": True,
 }
 
 AUDIO_FILTERS = {
@@ -85,7 +86,7 @@ class YTDLSource(discord.PCMVolumeTransformer):
     async def create_source(cls, search: str, requester: discord.User | discord.Member = None, filter_preset="clear", seek_seconds: int = 0, *, loop=None):
         loop = loop or asyncio.get_event_loop()
         
-        search_query = search if (search.startswith("http://") or search.startswith("https://")) else f"ytsearch:{search}"
+        search_query = search if (search.startswith("http://") or search.startswith("https://")) else f"ytsearch1:{search}"
 
         data = await loop.run_in_executor(None, lambda: ytdl.extract_info(search_query, download=False))
 
