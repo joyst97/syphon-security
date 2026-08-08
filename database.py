@@ -21,6 +21,15 @@ def init_db():
     conn = get_connection()
     cursor = conn.cursor()
 
+    # Bot Stats Cache Table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS bot_stats_cache (
+        stat_key TEXT PRIMARY KEY,
+        stat_value TEXT,
+        updated_at INTEGER
+    )
+    """)
+
     # Guild Settings Table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS guild_settings (
@@ -580,6 +589,30 @@ def close_ticket_db(channel_id: str):
     cursor.execute("UPDATE tickets SET status = 'closed' WHERE channel_id = ?", (str(channel_id),))
     conn.commit()
     conn.close()
+
+def set_stat_cache(key: str, val):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        ts = int(datetime.datetime.now(datetime.timezone.utc).timestamp())
+        cursor.execute("INSERT INTO bot_stats_cache (stat_key, stat_value, updated_at) VALUES (?, ?, ?) ON CONFLICT(stat_key) DO UPDATE SET stat_value = ?, updated_at = ?", (key, str(val), ts, str(val), ts))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logger.error(f"Error setting stat cache for {key}: {e}")
+
+def get_stat_cache(key: str, default="0"):
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT stat_value FROM bot_stats_cache WHERE stat_key = ?", (key,))
+        row = cursor.fetchone()
+        conn.close()
+        if row and row["stat_value"]:
+            return row["stat_value"]
+    except Exception:
+        pass
+    return str(default)
 
 if __name__ == "__main__":
     init_db()

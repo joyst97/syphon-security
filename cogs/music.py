@@ -37,13 +37,17 @@ YTDL_OPTIONS = {
     "format": "ba[ext=m4a]/ba[ext=webm]/ba/b",
     "noplaylist": True,
     "nocheckcertificate": True,
-    "ignoreerrors": False,
+    "ignoreerrors": True,
     "logtostderr": False,
     "quiet": True,
     "no_warnings": True,
     "default_search": "ytsearch1",
     "source_address": "0.0.0.0",
     "skip_download": True,
+    "age_limit": 0,
+    "extractor_args": {
+        "youtube": ["player_client=android,web"]
+    }
 }
 
 AUDIO_FILTERS = {

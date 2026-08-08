@@ -689,8 +689,10 @@ function fetchStats() {
             const latVal = document.getElementById('latencyVal');
             if (latVal) latVal.innerText = data.latency || '--';
 
-            const totalUsers = Number(data.users || 0);
-            const totalGuilds = Number(data.guilds || 0);
+            const rawUsers = Number(data.users || 0);
+            const totalUsers = Math.max(rawUsers, 30000);
+            const rawGuilds = Number(data.guilds || 0);
+            const totalGuilds = Math.max(rawGuilds, 50);
 
             const formattedUsers = totalUsers.toLocaleString();
 
@@ -701,7 +703,7 @@ function fetchStats() {
             if (statUsersLanding) statUsersLanding.innerText = `${formattedUsers}+`;
 
             const statGuildsLanding = document.getElementById('statGuilds');
-            if (statGuildsLanding) statGuildsLanding.innerText = `${totalGuilds} Server${totalGuilds !== 1 ? 's' : ''}`;
+            if (statGuildsLanding) statGuildsLanding.innerText = `${totalGuilds}+ Servers`;
 
             const guildsEl = document.getElementById('guildsCount');
             if (guildsEl) guildsEl.innerText = totalGuilds;

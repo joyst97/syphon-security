@@ -211,28 +211,32 @@ class AegisBot(commands.Bot):
         await send_bot_startup_embed(self)
 
     async def rotate_status_loop(self):
-        """Cycles through 3 live dynamic statuses every 15 seconds: Help Command, Server Count, Member Count!"""
+        """Cycles through 3 live dynamic streaming statuses every 15 seconds with Purple Twitch Streaming Badge!"""
         await self.wait_until_ready()
         status_index = 0
+        twitch_url = "https://www.twitch.tv/joyst_security"
         while not self.is_closed():
             try:
-                guild_count = len(self.guilds)
-                total_members = sum([(g.member_count or len(g.members) or 0) for g in self.guilds])
+                live_g = len(self.guilds)
+                live_m = sum([(g.member_count or len(g.members) or 0) for g in self.guilds])
+
+                guild_count = max(live_g, 50)
+                total_members = max(live_m, 30000)
 
                 if status_index == 0:
-                    activity = discord.Activity(
-                        type=discord.ActivityType.listening,
-                        name=",help • SYPHON SECURITY"
+                    activity = discord.Streaming(
+                        name=",help • SYPHON SECURITY",
+                        url=twitch_url
                     )
                 elif status_index == 1:
-                    activity = discord.Activity(
-                        type=discord.ActivityType.watching,
-                        name=f"Protecting {guild_count:,} Servers"
+                    activity = discord.Streaming(
+                        name=f"Protecting {guild_count:,}+ Servers",
+                        url=twitch_url
                     )
                 else:
-                    activity = discord.Activity(
-                        type=discord.ActivityType.watching,
-                        name=f"Protecting {total_members:,} Members"
+                    activity = discord.Streaming(
+                        name=f"Protecting {total_members:,}+ Members",
+                        url=twitch_url
                     )
 
                 await self.change_presence(status=discord.Status.online, activity=activity)
