@@ -121,15 +121,12 @@ class TTS(commands.Cog):
                 if not vc_channel or not isinstance(vc_channel, (discord.VoiceChannel, discord.StageChannel)):
                     continue
 
-                vc = guild.voice_client
-                if not vc or not vc.is_connected():
-                    try:
-                        await asyncio.wait_for(vc_channel.connect(reconnect=True, self_deaf=True), timeout=10.0)
-                        logger.info(f"24/7 Engine: Auto-reconnected bot to #{vc_channel.name} in {guild.name}")
-                    except Exception as ce:
-                        logger.warning(f"24/7 Voice Reconnect attempt failed: {ce}")
-                elif vc.channel != vc_channel and not vc.is_playing():
-                    await vc.move_to(vc_channel)
+                from cogs.music import ensure_clean_voice_connection
+                try:
+                    await ensure_clean_voice_connection(guild, vc_channel)
+                    logger.info(f"24/7 Engine: Auto-reconnected bot to #{vc_channel.name} in {guild.name}")
+                except Exception as ce:
+                    logger.warning(f"24/7 Voice Reconnect attempt failed: {ce}")
         except Exception as e:
             logger.error(f"24/7 Voice Reconnect Error: {e}")
 
@@ -154,16 +151,13 @@ class TTS(commands.Cog):
         while not queue.empty():
             try:
                 channel, text, lang = await queue.get()
-                vc = guild.voice_client
-                if not vc or not vc.is_connected():
-                    try:
-                        vc = await asyncio.wait_for(channel.connect(reconnect=True, self_deaf=True), timeout=10.0)
-                    except Exception as ce:
-                        logger.error(f"Failed to connect to voice channel: {ce}")
-                        queue.task_done()
-                        continue
-                elif vc.channel != channel and not vc.is_playing():
-                    await vc.move_to(channel)
+                from cogs.music import ensure_clean_voice_connection
+                try:
+                    vc = await ensure_clean_voice_connection(guild, channel)
+                except Exception as ce:
+                    logger.error(f"Failed to connect to voice channel: {ce}")
+                    queue.task_done()
+                    continue
 
                 lang_clean = lang.lower()
                 lang_code = "hi" if ("hi" in lang_clean or "hindi" in lang_clean) else "en"
@@ -357,9 +351,49 @@ class TTS(commands.Cog):
                 speech = f"{member.display_name} left the voice channel"
                 await self.speak_text_in_vc(guild, before.channel, speech, "en")
 
-    # --- 24/7 Voice Stay Commands ---
+    # --- 24/7 Voice Stay & Join/Leave Commands ---
 
-    @commands.command(name="247", aliases=["stay247"])
+    @commands.command(name="join", aliases=["connect"])
+    async def prefix_join(self, ctx):
+        """Connect bot cleanly to your Voice Channel: ,join"""
+        if not ctx.author.voice or not ctx.author.voice.channel:
+            await ctx.send(f"{get_emoji('warning', ctx.guild)} You must be connected to a Voice Channel first!")
+            return
+
+        channel = ctx.author.voice.channel
+        from cogs.music import ensure_clean_voice_connection
+        try:
+            await ensure_clean_voice_connection(ctx.guild, channel)
+            embed = joyst_embed(
+                description=f"{get_emoji('success', ctx.guild)} **Connected to {channel.mention}!**",
+                color=COLOR_SUCCESS,
+                guild=ctx.guild
+            )
+            await ctx.send(embed=embed)
+        except Exception as e:
+            await ctx.send(f"❌ Could not connect to {channel.mention}: `{e}`")
+
+    @app_commands.command(name="join", description="Connect bot cleanly to your Voice Channel")
+    async def slash_join(self, interaction: discord.Interaction):
+        user = interaction.user
+        if not hasattr(user, "voice") or not user.voice or not user.voice.channel:
+            await interaction.response.send_message(f"{get_emoji('warning', interaction.guild)} You must be in a Voice Channel first!", ephemeral=True)
+            return
+
+        channel = user.voice.channel
+        from cogs.music import ensure_clean_voice_connection
+        try:
+            await ensure_clean_voice_connection(interaction.guild, channel)
+            embed = joyst_embed(
+                description=f"{get_emoji('success', interaction.guild)} **Connected to {channel.mention}!**",
+                color=COLOR_SUCCESS,
+                guild=interaction.guild
+            )
+            await interaction.response.send_message(embed=embed)
+        except Exception as e:
+            await interaction.response.send_message(f"❌ Could not connect to {channel.mention}: `{e}`", ephemeral=True)
+
+    @commands.command(name="247", aliases=["stay247", "24/7"])
     async def prefix_247(self, ctx):
         """Toggle 24/7 Voice Stay Mode: !247"""
         if not ctx.author.voice or not ctx.author.voice.channel:
@@ -369,14 +403,15 @@ class TTS(commands.Cog):
         channel = ctx.author.voice.channel
         db.set_247_vc_db(str(ctx.guild.id), str(channel.id))
 
-        vc = ctx.guild.voice_client
-        if not vc or not vc.is_connected():
-            await channel.connect(reconnect=True, self_deaf=True)
-        elif vc.channel != channel:
-            await vc.move_to(channel)
+        from cogs.music import ensure_clean_voice_connection
+        try:
+            await ensure_clean_voice_connection(ctx.guild, channel)
+        except Exception as e:
+            await ctx.send(f"❌ Could not connect to {channel.mention}: `{e}`")
+            return
 
         embed = joyst_embed(
-            description=f"{get_emoji('verify', ctx.guild)} **24/7 Voice Stay Mode Enabled!**\n> Bot will stay connected to {channel.mention} 24 hours a day, 7 days a week, automatically auto-reconnecting on disconnect!",
+            description=f"{get_emoji('verify', ctx.guild)} **24/7 Voice Stay Mode Enabled!**\n> Bot will stay connected to {channel.mention} 24/7 and auto-reconnect on disconnect!",
             color=COLOR_SUCCESS,
             guild=ctx.guild
         )
@@ -392,14 +427,15 @@ class TTS(commands.Cog):
         channel = user.voice.channel
         db.set_247_vc_db(str(interaction.guild.id), str(channel.id))
 
-        vc = interaction.guild.voice_client
-        if not vc or not vc.is_connected():
-            await channel.connect(reconnect=True, self_deaf=True)
-        elif vc.channel != channel:
-            await vc.move_to(channel)
+        from cogs.music import ensure_clean_voice_connection
+        try:
+            await ensure_clean_voice_connection(interaction.guild, channel)
+        except Exception as e:
+            await interaction.response.send_message(f"❌ Could not connect to {channel.mention}: `{e}`", ephemeral=True)
+            return
 
         embed = joyst_embed(
-            description=f"{get_emoji('verify', interaction.guild)} **24/7 Voice Stay Mode Enabled!**\n> Bot will stay connected to {channel.mention} 24 hours a day, 7 days a week, automatically auto-reconnecting on disconnect!",
+            description=f"{get_emoji('verify', interaction.guild)} **24/7 Voice Stay Mode Enabled!**\n> Bot will stay connected to {channel.mention} 24/7 and auto-reconnect on disconnect!",
             color=COLOR_SUCCESS,
             guild=interaction.guild
         )
@@ -407,11 +443,14 @@ class TTS(commands.Cog):
 
     @commands.command(name="leave")
     async def prefix_leave(self, ctx):
-        """Disconnect bot from Voice Channel & disable 24/7 mode: !leave"""
+        """Disconnect bot from Voice Channel & disable 24/7 mode: ,leave"""
         db.remove_247_vc_db(str(ctx.guild.id))
         vc = ctx.guild.voice_client
-        if vc and vc.is_connected():
-            await vc.disconnect()
+        if vc:
+            try:
+                await vc.disconnect(force=True)
+            except Exception:
+                pass
             await ctx.send(f"{get_emoji('cancel', ctx.guild)} Disconnected from Voice Channel and disabled 24/7 mode.")
         else:
             await ctx.send(f"{get_emoji('warning', ctx.guild)} Bot is not currently connected to any Voice Channel.")
@@ -420,8 +459,11 @@ class TTS(commands.Cog):
     async def slash_leave(self, interaction: discord.Interaction):
         db.remove_247_vc_db(str(interaction.guild.id))
         vc = interaction.guild.voice_client
-        if vc and vc.is_connected():
-            await vc.disconnect()
+        if vc:
+            try:
+                await vc.disconnect(force=True)
+            except Exception:
+                pass
             await interaction.response.send_message(f"{get_emoji('cancel', interaction.guild)} Disconnected from Voice Channel and disabled 24/7 mode.")
         else:
             await interaction.response.send_message(f"{get_emoji('warning', interaction.guild)} Bot is not currently connected to any Voice Channel.", ephemeral=True)
@@ -434,7 +476,7 @@ class TTS(commands.Cog):
         if message.author.bot or not message.guild or not message.content:
             return
 
-        if message.content.startswith(("!", "/", "http://", "https://")):
+        if message.content.startswith((",", "!", "/", "http://", "https://")):
             return
 
         guild = message.guild
@@ -452,7 +494,7 @@ class TTS(commands.Cog):
 
     @commands.command(name="ttsauto", aliases=["autotts", "ttschannel"])
     async def prefix_ttsauto(self, ctx, action: str = "enable"):
-        """Enable or disable Auto Chat-to-Speech Read Aloud Mode for this channel: !ttsauto enable/disable"""
+        """Enable or disable Auto Chat-to-Speech Read Aloud Mode for this channel: ,ttsauto enable/disable"""
         guild = ctx.guild
         act = action.lower()
 
@@ -500,40 +542,38 @@ class TTS(commands.Cog):
 
     @commands.command(name="ttsjoin")
     async def prefix_ttsjoin(self, ctx):
-        """Join VC and activate Auto Live Chat-to-Speech Mode for this channel: !ttsjoin"""
+        """Join VC and activate Auto Live Chat-to-Speech Mode for this channel: ,ttsjoin"""
         if not ctx.author.voice or not ctx.author.voice.channel:
             await ctx.send(f"{get_emoji('warning', ctx.guild)} You must be connected to a Voice Channel first!")
             return
 
         channel = ctx.author.voice.channel
         guild = ctx.guild
-        vc = guild.voice_client
-
+        
+        from cogs.music import ensure_clean_voice_connection
         try:
-            if not vc or not vc.is_connected():
-                vc = await channel.connect(reconnect=True, self_deaf=True)
-            elif vc.channel != channel:
-                await vc.move_to(channel)
-
-            db.set_247_vc_db(str(guild.id), str(channel.id))
-            db.set_auto_tts_channel_db(str(guild.id), str(ctx.channel.id))
-
-            embed = joyst_embed(
-                description=(
-                    f"{get_emoji('success', guild)} **JOYST AUTO TTS ACTIVATED!**\n\n"
-                    f"🔊 **Connected VC:** {channel.mention}\n"
-                    f"💬 **Reading Messages From:** {ctx.channel.mention}\n\n"
-                    f"⚡ *Every message typed in {ctx.channel.mention} will now be read aloud live in {channel.name}!*"
-                ),
-                color=COLOR_SUCCESS,
-                guild=guild
-            )
-            await ctx.send(embed=embed)
-
-            speech = f"Auto TTS activated for {ctx.channel.name}. Type any message to hear it read aloud!"
-            await self.speak_text_in_vc(guild, channel, speech, "en")
+            await ensure_clean_voice_connection(guild, channel)
         except Exception as e:
-            await ctx.send(f"{get_emoji('cancel', ctx.guild)} Failed to activate TTS Join: `{e}`")
+            await ctx.send(f"❌ Could not connect to {channel.mention}: `{e}`")
+            return
+
+        db.set_247_vc_db(str(guild.id), str(channel.id))
+        db.set_auto_tts_channel_db(str(guild.id), str(ctx.channel.id))
+
+        embed = joyst_embed(
+            description=(
+                f"{get_emoji('success', guild)} **JOYST AUTO TTS ACTIVATED!**\n\n"
+                f"🔊 **Connected VC:** {channel.mention}\n"
+                f"💬 **Reading Messages From:** {ctx.channel.mention}\n\n"
+                f"⚡ *Every message typed in {ctx.channel.mention} will now be read aloud live in {channel.name}!*"
+            ),
+            color=COLOR_SUCCESS,
+            guild=guild
+        )
+        await ctx.send(embed=embed)
+
+        speech = f"Auto TTS activated for {ctx.channel.name}. Type any message to hear it read aloud!"
+        await self.speak_text_in_vc(guild, channel, speech, "en")
 
     @app_commands.command(name="ttsjoin", description="Connect bot to VC and activate Live Chat-to-Speech Read Aloud Mode")
     async def slash_ttsjoin(self, interaction: discord.Interaction):

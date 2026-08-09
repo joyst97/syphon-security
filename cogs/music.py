@@ -223,6 +223,60 @@ class ProtectedMusicControlView(discord.ui.View):
 
         await interaction.response.send_message(f"{get_emoji('delete', guild)} **Stopped playback, cleared queue, and left Voice Channel.**", ephemeral=True)
 
+async def ensure_clean_voice_connection(guild: discord.Guild, target_vc_channel: discord.VoiceChannel):
+    """
+    Robust Voice Connection & Recovery Engine:
+    Handles existing connections, channel moves, reconnects, and ghost voice client cleanup!
+    Guaranteed NEVER to raise 'Already connected to a voice channel' ClientException!
+    """
+    if not guild or not target_vc_channel:
+        raise Exception("Invalid guild or voice channel object.")
+
+    vc = guild.voice_client
+
+    # 1. If bot is already connected to the EXACT requested channel, return existing vc!
+    if vc and vc.is_connected() and vc.channel and vc.channel.id == target_vc_channel.id:
+        return vc
+
+    # 2. If bot is connected to a DIFFERENT voice channel in the guild, move to target channel!
+    if vc and vc.is_connected():
+        try:
+            await vc.move_to(target_vc_channel)
+            return vc
+        except Exception as e:
+            logger.warning(f"move_to failed in {guild.name}, attempting disconnect & reconnect: {e}")
+
+    # 3. If vc exists but is NOT connected (Ghost state), force disconnect and cleanup first!
+    if vc:
+        try:
+            await vc.disconnect(force=True)
+        except Exception:
+            pass
+        await asyncio.sleep(0.3)
+
+    # 4. Attempt clean fresh connection with retries
+    for attempt in range(2):
+        try:
+            vc = await target_vc_channel.connect(reconnect=True, timeout=12.0, self_deaf=True)
+            return vc
+        except discord.errors.ClientException as ce:
+            logger.warning(f"ClientException on connect attempt {attempt+1}: {ce}. Force clearing ghost voice client.")
+            if guild.voice_client:
+                try:
+                    await guild.voice_client.disconnect(force=True)
+                except Exception:
+                    pass
+            await asyncio.sleep(0.5)
+        except Exception as e:
+            if attempt == 1:
+                raise e
+            await asyncio.sleep(0.5)
+
+    if guild.voice_client and guild.voice_client.is_connected():
+        return guild.voice_client
+
+    raise Exception("Could not establish clean voice connection after retries.")
+
 async def set_vc_status(channel: discord.VoiceChannel, status_text: str):
     """Sets Discord Voice Channel Status with animated music emoji & track title"""
     if not channel or not isinstance(channel, (discord.VoiceChannel, discord.StageChannel)):
@@ -416,15 +470,14 @@ class Music(commands.Cog):
         target_vc_channel = author.voice.channel
 
         try:
-            vc = guild.voice_client
-            if not vc or not vc.is_connected():
-                vc = await target_vc_channel.connect(reconnect=True, self_deaf=True)
-            elif vc.channel != target_vc_channel:
-                await vc.move_to(target_vc_channel)
+            vc = await ensure_clean_voice_connection(guild, target_vc_channel)
         except Exception as e:
             embed = joyst_embed(description=f"❌ Could not connect to {target_vc_channel.mention}: `{e}`", color=COLOR_DANGER, guild=guild)
             if isinstance(ctx_or_interaction, discord.Interaction):
-                await ctx_or_interaction.followup.send(embed=embed)
+                if ctx_or_interaction.response.is_done():
+                    await ctx_or_interaction.followup.send(embed=embed)
+                else:
+                    await ctx_or_interaction.response.send_message(embed=embed)
             else:
                 await ctx_or_interaction.send(embed=embed)
             return
