@@ -142,7 +142,7 @@ class ServerStats(commands.Cog):
 
     # --- Commands ---
 
-    @commands.group(name="stats", invoke_without_command=True)
+    @commands.group(name="memberstats", aliases=["counterstats"], invoke_without_command=True)
     @commands.has_permissions(administrator=True)
     async def prefix_stats(self, ctx):
         await self._do_setup_stats(ctx)
@@ -160,7 +160,7 @@ class ServerStats(commands.Cog):
 
     # --- Slash Commands ---
 
-    stats_group = app_commands.Group(name="stats", description=f"{config.SERVER_NAME} Live Stats Counter Commands")
+    stats_group = app_commands.Group(name="memberstats", description=f"{config.SERVER_NAME} Live Stats Counter Commands")
 
     @stats_group.command(name="setup", description="Deploy live locked Total Members counter channel at top of server")
     @app_commands.describe(category="Target category to place counter under (optional)")

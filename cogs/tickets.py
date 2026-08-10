@@ -595,14 +595,24 @@ class TicketFAQView(discord.ui.View):
         )
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
+def parse_emoji_safe(emoji_str):
+    if not emoji_str:
+        return "🎫"
+    try:
+        if (emoji_str.startswith("<:") or emoji_str.startswith("<a:")) and emoji_str.endswith(">"):
+            return discord.PartialEmoji.from_str(emoji_str)
+    except Exception:
+        pass
+    return emoji_str
+
 class TicketDropdown(discord.ui.Select):
     def __init__(self, bot_instance: commands.Bot):
         self.bot = bot_instance
         options = [
-            discord.SelectOption(label="Purchase Here", value="purchase", description="For purchase related queries", emoji="<:client:1411727778092679199>"),
-            discord.SelectOption(label="Buy Projects", value="exchange", description="For Purchasing Joyst Corporation Projects", emoji="<:trick_supreme:1411728276342308945>"),
-            discord.SelectOption(label="Request Support", value="support", description="For technical support", emoji="<:warning:1396401353231831123>"),
-            discord.SelectOption(label="Buy Tools", value="tools", description="To buy our tools", emoji="<:94046dev:1411728964380004413>")
+            discord.SelectOption(label="Purchase Here", value="purchase", description="For purchase related queries", emoji=parse_emoji_safe("<:client:1411727778092679199>")),
+            discord.SelectOption(label="Buy Projects", value="exchange", description="For Purchasing Joyst Corporation Projects", emoji=parse_emoji_safe("<:trick_supreme:1411728276342308945>")),
+            discord.SelectOption(label="Request Support", value="support", description="For technical support", emoji=parse_emoji_safe("<:warning:1396401353231831123>")),
+            discord.SelectOption(label="Buy Tools", value="tools", description="To buy our tools", emoji=parse_emoji_safe("<:94046dev:1411728964380004413>"))
         ]
         super().__init__(
             placeholder="Click here to Buy Panel / Projects & For Support",
@@ -1096,9 +1106,12 @@ class Tickets(commands.Cog):
     @commands.command(name="ticketpanel", aliases=["tp"])
     async def ticket_panel_prefix(self, ctx: commands.Context):
         """Send the official Joyst Corporation Ticket Creation Panel"""
+        cfg = load_config()
+        banner_url = cfg.get("banner_url") or (ctx.guild.banner.url if ctx.guild and ctx.guild.banner else None)
+
         embed = discord.Embed(
             title="🎫 **Joyst Corporation Support**",
-            description="# <:GlacierTicketSupportEmojiForBot:1396426191673626624> Create Ticket\n"
+            description="# <a:13969niebieskipiorun:1441085314272722959> Create Ticket\n"
                         "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
                         "** Welcome To Joyst Corporation **\n\n"
                         "・ Use Drop Down Menu And Select What You Want\n"
@@ -1108,20 +1121,25 @@ class Tickets(commands.Cog):
             color=discord.Color.teal()
         )
         embed.set_footer(text="© Joyst Corporation , All Rights Reserved.")
-        embed.set_thumbnail(url=ctx.guild.icon.url if ctx.guild.icon else None)
+        if ctx.guild and ctx.guild.icon:
+            embed.set_thumbnail(url=ctx.guild.icon.url)
+        if banner_url:
+            embed.set_image(url=banner_url)
 
         panel_msg = await ctx.send(embed=embed, view=TicketView(bot_instance=self.bot))
 
-        cfg = load_config()
         cfg['panel_message_id'] = panel_msg.id
         cfg['panel_channel_id'] = panel_msg.channel.id
         save_config(cfg)
 
     @app_commands.command(name="ticketpanel", description="Displays the ticket creation panel for users.")
     async def ticket_panel_slash(self, interaction: discord.Interaction):
+        cfg = load_config()
+        banner_url = cfg.get("banner_url") or (interaction.guild.banner.url if interaction.guild and interaction.guild.banner else None)
+
         embed = discord.Embed(
             title="🎫 **Joyst Corporation Support**",
-            description="# Create Ticket\n"
+            description="# <a:13969niebieskipiorun:1441085314272722959> Create Ticket\n"
                         "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
                         "** Welcome To Joyst Corporation **\n\n"
                         "・ Use Drop Down Menu And Select What You Want\n"
@@ -1131,12 +1149,14 @@ class Tickets(commands.Cog):
             color=discord.Color.teal()
         )
         embed.set_footer(text="© Joyst Corporation , All Rights Reserved.")
-        embed.set_thumbnail(url=interaction.guild.icon.url if interaction.guild.icon else None)
+        if interaction.guild and interaction.guild.icon:
+            embed.set_thumbnail(url=interaction.guild.icon.url)
+        if banner_url:
+            embed.set_image(url=banner_url)
 
         await interaction.response.send_message(embed=embed, view=TicketView(bot_instance=self.bot), ephemeral=False)
         panel_msg = await interaction.original_response()
 
-        cfg = load_config()
         cfg['panel_message_id'] = panel_msg.id
         cfg['panel_channel_id'] = panel_msg.channel.id
         save_config(cfg)
@@ -1503,6 +1523,34 @@ class Tickets(commands.Cog):
         file_content = io.BytesIO(json.dumps(current_data, indent=4).encode('utf-8'))
         backup_file = discord.File(file_content, filename="tickets_data_backup.json")
         await ctx.send("📦 **Ticket Data Backup:**", file=backup_file)
+
+    @commands.command(name="checkdata")
+    async def checkdata_prefix(self, ctx: commands.Context):
+        """Check active and closed tickets summary: ,checkdata"""
+        if not is_strict_admin(ctx.author):
+            return
+        active_count = len(open_tickets)
+        closed_count = len(tickets_data.get("closed", {}))
+        
+        msg = f"📊 **Ticket Data Summary:**\n" \
+              f"• Active tickets in JSON: `{active_count}`\n" \
+              f"• Closed tickets in JSON: `{closed_count}`\n" \
+              f"• Total: `{active_count + closed_count}`"
+        await ctx.send(msg)
+
+    @app_commands.command(name="checkdata", description="Check active and closed tickets summary")
+    async def checkdata_slash(self, interaction: discord.Interaction):
+        if not is_strict_admin(interaction.user):
+            await interaction.response.send_message("❌ Only Administrators can use this command.", ephemeral=True)
+            return
+        active_count = len(open_tickets)
+        closed_count = len(tickets_data.get("closed", {}))
+        
+        msg = f"📊 **Ticket Data Summary:**\n" \
+              f"• Active tickets in JSON: `{active_count}`\n" \
+              f"• Closed tickets in JSON: `{closed_count}`\n" \
+              f"• Total: `{active_count + closed_count}`"
+        await interaction.response.send_message(msg, ephemeral=True)
 
 async def perform_close_ticket(interaction_or_ctx, channel: discord.TextChannel, bot_instance):
     is_interaction = isinstance(interaction_or_ctx, discord.Interaction)
