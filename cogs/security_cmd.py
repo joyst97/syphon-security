@@ -744,9 +744,30 @@ class SecurityCmd(commands.Cog):
     async def prefix_serverinfo(self, ctx):
         await self._do_serverinfo(ctx)
 
-    @app_commands.command(name="serverinfo", description="View detailed server metrics, owner, member breakdown & boost status")
-    async def slash_serverinfo(self, interaction: discord.Interaction):
-        await self._do_serverinfo(interaction)
+    @commands.command(name="sync")
+    async def prefix_sync(self, ctx):
+        """Force instant slash commands sync for this server: ,sync"""
+        if not is_admin_or_owner(ctx):
+            await ctx.send("❌ Only Server Owner or Administrators can use this command.")
+            return
+        await ctx.send("⚡ Syncing all slash commands to Discord...")
+        try:
+            synced = await self.bot.tree.sync()
+            await ctx.send(f"✅ Successfully synced `{len(synced)}` slash commands globally!")
+        except Exception as e:
+            await ctx.send(f"❌ Sync failed: `{e}`")
+
+    @app_commands.command(name="sync", description="Force instant slash commands sync for this server")
+    async def slash_sync(self, interaction: discord.Interaction):
+        if not is_admin_or_owner(interaction):
+            await interaction.response.send_message("❌ Only Server Owner or Administrators can use this command.", ephemeral=True)
+            return
+        await interaction.response.defer(ephemeral=True)
+        try:
+            synced = await self.bot.tree.sync()
+            await interaction.followup.send(f"✅ Successfully synced `{len(synced)}` slash commands globally!")
+        except Exception as e:
+            await interaction.followup.send(f"❌ Sync failed: `{e}`")
 
 async def setup(bot):
     try:

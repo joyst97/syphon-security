@@ -6,12 +6,12 @@ import re
 import urllib.parse
 import logging
 import shutil
-import audioop
 import static_ffmpeg
 import config
 import database as db
 from embed_builder import joyst_embed, COLOR_SUCCESS, COLOR_WARNING, COLOR_DANGER, COLOR_INFO, COLOR_PURPLE, COLOR_DARK
 from emojis import get_emoji
+import array
 
 logger = logging.getLogger("AEGIS.TTS")
 
@@ -35,11 +35,57 @@ try:
 except Exception:
     FFMPEG_PATH = "ffmpeg"
 
+try:
+    import audioop
+except ModuleNotFoundError:
+    try:
+        import audioop_lts as audioop
+    except Exception:
+        audioop = None
+
+def pcm_mul(fragment: bytes, width: int, factor: float) -> bytes:
+    if audioop:
+        try:
+            return audioop.mul(fragment, width, factor)
+        except Exception:
+            pass
+    if not fragment:
+        return b''
+    try:
+        arr = array.array('h', fragment)
+        for i in range(len(arr)):
+            val = int(arr[i] * factor)
+            arr[i] = max(-32768, min(32767, val))
+        return arr.tobytes()
+    except Exception:
+        return fragment
+
+def pcm_add(frag1: bytes, frag2: bytes, width: int) -> bytes:
+    if audioop:
+        try:
+            return audioop.add(frag1, frag2, width)
+        except Exception:
+            pass
+    if not frag1:
+        return frag2
+    if not frag2:
+        return frag1
+    try:
+        length = min(len(frag1), len(frag2))
+        arr1 = array.array('h', frag1[:length])
+        arr2 = array.array('h', frag2[:length])
+        for i in range(len(arr1)):
+            val = arr1[i] + arr2[i]
+            arr1[i] = max(-32768, min(32767, val))
+        return arr1.tobytes()
+    except Exception:
+        return frag1
+
 class AudioMixerSource(discord.AudioSource):
     """
     Real-Time Audio Ducking & Overlay Mixer Engine:
     Ducks background music to 20% volume and overlays TTS speech at 160% volume!
-    Zero Stop, Zero Delay, Zero Gap, Zero Song Restart!
+    Zero Stop, Zero Delay, Zero Gap, Zero Song Restart! Compatible with Python 3.13!
     """
     def __init__(self, music_source, tts_source, duck_volume=0.20, tts_volume=1.6):
         self.music = music_source
@@ -73,14 +119,14 @@ class AudioMixerSource(discord.AudioSource):
 
         if not music_frame:
             try:
-                return audioop.mul(tts_frame, 2, self.tts_volume)
+                return pcm_mul(tts_frame, 2, self.tts_volume)
             except Exception:
                 return tts_frame
 
         try:
-            ducked_music = audioop.mul(music_frame, 2, self.duck_volume)
-            boosted_tts = audioop.mul(tts_frame, 2, self.tts_volume)
-            mixed_frame = audioop.add(ducked_music, boosted_tts, 2)
+            ducked_music = pcm_mul(music_frame, 2, self.duck_volume)
+            boosted_tts = pcm_mul(tts_frame, 2, self.tts_volume)
+            mixed_frame = pcm_add(ducked_music, boosted_tts, 2)
             return mixed_frame
         except Exception:
             return music_frame
