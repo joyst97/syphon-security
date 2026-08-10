@@ -1,0 +1,33 @@
+{
+    "token": "MTM4MDEwNDkyMDUxNDAzNTgxMg.GrRQzc.-xep9lssVvwzQEzv2zvsdfQBtw0o__ClthNnOs",
+    "purchase_category_id": "1409233842744852591",
+    "exchange_category_id": "1409233847605788714",
+    "support_category_id": "1409233850353324123",
+    "tools_category_id": "1409233852882354217",
+    "admin_user_id": "956388318961086465",
+    "purchase_role_id": "1409233831176966264",
+    "exchange_role_id": "1409233831176966264",
+    "support_role_id": "1409233831176966264",
+    "tools_role_id": "1409233831176966264",
+    "transcript_channels": {
+        "purchase": "1410900438601044028",
+        "exchange": "1410900438601044028",
+        "support": "1410900438601044028",
+        "tools": "1410900438601044028"
+    },
+    "panel_message_id": 1441335103581192254,
+    "panel_channel_id": 1409233903751008489,
+    "upi_id": "shivang-maurya@fam",
+    "qr_image_path": "qr.png",
+    "faq_tos": "1. Strictly no refunds.\n2. Delivery can take up to 24 hours.\n3. Respect staff members.",
+    "faq_pricing": "Please check our catalog in the pricing channel. Standard pricing applies to all orders.",
+    "faq_payment_rules": "We accept UPI , Crypto Binance & More. Make sure to send a screenshot of the payment receipt.",
+    "stripe_payment_link": "https://buy.stripe.com/mock_link",
+    "stripe_api_key": "",
+    "enable_stripe": false,
+    "escalation_threshold_seconds": 1800,
+    "binance_pay_id": "1015322654",
+    "binance_qr_path": "binance_qr.png",
+    "ltc_address": "LX66S1hh84gpRDJSbQsn5K6bbJtML8bjK7",
+    "ltc_qr_path": "ltc_qr.png"
+}

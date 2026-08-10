@@ -14,7 +14,6 @@ from emojis import get_emoji
 
 logger = logging.getLogger("AEGIS.Music")
 
-# Auto-add static_ffmpeg binaries to process PATH and resolve exact executable path
 try:
     static_ffmpeg.add_paths()
     FFMPEG_PATH = shutil.which("ffmpeg") or "ffmpeg"
@@ -23,14 +22,12 @@ except Exception as e:
     FFMPEG_PATH = "ffmpeg"
     logger.warning(f"Could not initialize static_ffmpeg: {e}")
 
-# Clean up any legacy temp_music folder to free server disk space completely
 MUSIC_TEMP_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "temp_music"))
 if os.path.exists(MUSIC_TEMP_DIR):
     try:
         shutil.rmtree(MUSIC_TEMP_DIR, ignore_errors=True)
-        logger.info("Cleaned up legacy temp_music directory. Zero disk space will be used.")
-    except Exception as e:
-        logger.warning(f"Could not delete temp_music directory: {e}")
+    except Exception:
+        pass
 
 # YTDL Options for Direct Web Audio Streaming (ZERO DISK DOWNLOAD, ZERO STORAGE USED)
 YTDL_OPTIONS = {
@@ -45,6 +42,9 @@ YTDL_OPTIONS = {
     "source_address": "0.0.0.0",
     "skip_download": True,
     "age_limit": 0,
+    "geo_bypass": True,
+    "youtube_include_dash_manifest": False,
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
     "extractor_args": {
         "youtube": ["player_client=android,web"]
     }
@@ -104,7 +104,12 @@ class YTDLSource(discord.PCMVolumeTransformer):
         if not stream_url:
             raise Exception("Direct audio stream URL could not be extracted.")
 
-        before_opts = f"-fflags nobuffer -flags low_delay -probesize 32 -analyzeduration 0 -ss {seek_seconds} -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5" if seek_seconds > 0 else "-fflags nobuffer -flags low_delay -probesize 32 -analyzeduration 0 -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
+        # HTTP User-Agent & Reconnect Headers to prevent YouTube CDN 2-second 403 HTTP disconnect drops!
+        headers_str = '-headers "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)\r\n"'
+        if seek_seconds > 0:
+            before_opts = f'{headers_str} -ss {seek_seconds} -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5'
+        else:
+            before_opts = f'{headers_str} -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5'
 
         ffmpeg_options = {
             "before_options": before_opts,
@@ -218,15 +223,14 @@ class ProtectedMusicControlView(discord.ui.View):
             self.cog.queues[gid] = []
             self.cog.loop_modes[gid] = "off"
             self.cog.autoplays[gid] = False
+
         vc.stop()
         await vc.disconnect()
-
         await interaction.response.send_message(f"{get_emoji('delete', guild)} **Stopped playback, cleared queue, and left Voice Channel.**", ephemeral=True)
 
 async def ensure_clean_voice_connection(guild: discord.Guild, target_vc_channel: discord.VoiceChannel):
     """
     Robust Voice Connection & Recovery Engine:
-    Handles existing connections, channel moves, reconnects, and ghost voice client cleanup!
     Guaranteed NEVER to raise 'Already connected to a voice channel' ClientException!
     """
     if not guild or not target_vc_channel:
@@ -234,11 +238,9 @@ async def ensure_clean_voice_connection(guild: discord.Guild, target_vc_channel:
 
     vc = guild.voice_client
 
-    # 1. If bot is already connected to the EXACT requested channel, return existing vc!
     if vc and vc.is_connected() and vc.channel and vc.channel.id == target_vc_channel.id:
         return vc
 
-    # 2. If bot is connected to a DIFFERENT voice channel in the guild, move to target channel!
     if vc and vc.is_connected():
         try:
             await vc.move_to(target_vc_channel)
@@ -246,7 +248,6 @@ async def ensure_clean_voice_connection(guild: discord.Guild, target_vc_channel:
         except Exception as e:
             logger.warning(f"move_to failed in {guild.name}, attempting disconnect & reconnect: {e}")
 
-    # 3. If vc exists but is NOT connected (Ghost state), force disconnect and cleanup first!
     if vc:
         try:
             await vc.disconnect(force=True)
@@ -254,7 +255,6 @@ async def ensure_clean_voice_connection(guild: discord.Guild, target_vc_channel:
             pass
         await asyncio.sleep(0.3)
 
-    # 4. Attempt clean fresh connection with retries
     for attempt in range(2):
         try:
             vc = await target_vc_channel.connect(reconnect=True, timeout=12.0, self_deaf=True)
@@ -284,7 +284,7 @@ async def set_vc_status(channel: discord.VoiceChannel, status_text: str):
     try:
         if hasattr(channel, "edit"):
             await channel.edit(status=status_text)
-    except Exception as e:
+    except Exception:
         try:
             await channel._state.http.request(
                 discord.http.Route('PUT', '/channels/{channel_id}/voice-status', channel_id=channel.id),
@@ -300,52 +300,11 @@ class Music(commands.Cog):
         self.current_song = {}
         self.loop_modes = {}
         self.autoplays = {}
-        self.is_tts_interrupting = {}
-        self.interrupted_track_data = {}
 
     def get_queue(self, guild_id: int):
         if guild_id not in self.queues:
             self.queues[guild_id] = []
         return self.queues[guild_id]
-
-    async def resume_after_tts(self, guild_id: int):
-        """Auto-resumes interrupted music playback from exact seek timestamp after TTS finishes"""
-        await asyncio.sleep(0.3)
-        guild = self.bot.get_guild(guild_id)
-        if not guild:
-            return
-        vc = guild.voice_client
-        if vc and vc.is_connected() and not vc.is_playing() and not vc.is_paused():
-            track_data = self.interrupted_track_data.get(guild_id)
-            if track_data:
-                try:
-                    web_url = track_data["webpage_url"]
-                    req = track_data["requester"]
-                    flt = track_data["filter"]
-                    seek_sec = track_data.get("seek_seconds", 0)
-
-                    logger.info(f"Resuming music '{web_url}' from seek position {seek_sec}s in {guild.name}")
-                    new_src = await YTDLSource.create_source(web_url, requester=req, filter_preset=flt, seek_seconds=seek_sec)
-
-                    self.current_song[guild_id] = new_src
-
-                    def after_playing(error):
-                        if error:
-                            logger.error(f"Playback error in {guild.name}: {error}")
-                        if self.is_tts_interrupting.get(guild_id):
-                            return
-                        class DummyCtx:
-                            def __init__(self, g, ch):
-                                self.guild = g
-                                self.channel = ch
-                        self.play_next(DummyCtx(guild, vc.channel), guild_id)
-
-                    vc.play(new_src, after=after_playing)
-
-                    status_text = f"{get_emoji('music', guild)} Playing: {new_src.title[:80]}"
-                    self.bot.loop.create_task(set_vc_status(vc.channel, status_text))
-                except Exception as e:
-                    logger.error(f"Error resuming track after TTS: {e}")
 
     async def _fetch_autoplay_related(self, song_id: str):
         if not song_id:
@@ -375,20 +334,19 @@ class Music(commands.Cog):
         loop_mode = self.loop_modes.get(guild_id, "off")
         autoplay_enabled = self.autoplays.get(guild_id, False)
 
-        # 1. Synchronously re-queue finished track if loop mode is active (Prevents async queue race conditions)
         if loop_mode == "track" and current and hasattr(current, "webpage_url"):
             queue.insert(0, {
                 "url": current.webpage_url,
                 "requester": current.requester,
                 "title": current.title,
-                "filter": getattr(current, "filter_preset", "normal")
+                "filter": getattr(current, "current_filter", "clear")
             })
         elif loop_mode == "queue" and current and hasattr(current, "webpage_url"):
             queue.append({
                 "url": current.webpage_url,
                 "requester": current.requester,
                 "title": current.title,
-                "filter": getattr(current, "filter_preset", "normal")
+                "filter": getattr(current, "current_filter", "clear")
             })
 
         if len(queue) == 0:
@@ -399,9 +357,12 @@ class Music(commands.Cog):
                         queue.append(auto_src)
                         self.play_next(ctx_or_interaction, guild_id)
                 self.bot.loop.create_task(trigger_autoplay())
+            else:
+                # When queue finishes, DO NOT DISCONNECT! Keep voice connection active!
+                if vc.channel:
+                    self.bot.loop.create_task(set_vc_status(vc.channel, ""))
             return
 
-        # 2. Pop next track item cleanly from queue
         next_item = queue.pop(0)
 
         async def prepare_and_play():
@@ -412,7 +373,7 @@ class Music(commands.Cog):
                     next_source = await YTDLSource.create_source(
                         next_item["url"],
                         requester=next_item["requester"],
-                        filter_preset=next_item.get("filter", "normal")
+                        filter_preset=next_item.get("filter", "clear")
                     )
                 else:
                     return
@@ -422,9 +383,6 @@ class Music(commands.Cog):
                 def after_playing(error):
                     if error:
                         logger.error(f"Playback error in {guild.name}: {error}")
-                    if self.is_tts_interrupting.get(guild_id):
-                        logger.info(f"Playback stopped for TTS interrupt in {guild.name}")
-                        return
                     self.play_next(ctx_or_interaction, guild_id)
 
                 vc.play(next_source, after=after_playing)
@@ -469,20 +427,28 @@ class Music(commands.Cog):
 
         target_vc_channel = author.voice.channel
 
+        if isinstance(ctx_or_interaction, discord.Interaction) and not ctx_or_interaction.response.is_done():
+            await ctx_or_interaction.response.defer()
+
         try:
             vc = await ensure_clean_voice_connection(guild, target_vc_channel)
         except Exception as e:
             embed = joyst_embed(description=f"❌ Could not connect to {target_vc_channel.mention}: `{e}`", color=COLOR_DANGER, guild=guild)
             if isinstance(ctx_or_interaction, discord.Interaction):
-                if ctx_or_interaction.response.is_done():
-                    await ctx_or_interaction.followup.send(embed=embed)
-                else:
-                    await ctx_or_interaction.response.send_message(embed=embed)
+                await ctx_or_interaction.followup.send(embed=embed)
             else:
                 await ctx_or_interaction.send(embed=embed)
             return
 
-        source = await YTDLSource.create_source(query, requester=author, loop=self.bot.loop)
+        try:
+            source = await YTDLSource.create_source(query, requester=author, loop=self.bot.loop)
+        except Exception as e:
+            embed = joyst_embed(description=f"❌ Failed to extract track details: `{e}`", color=COLOR_DANGER, guild=guild)
+            if isinstance(ctx_or_interaction, discord.Interaction):
+                await ctx_or_interaction.followup.send(embed=embed)
+            else:
+                await ctx_or_interaction.send(embed=embed)
+            return
 
         queue = self.get_queue(guild.id)
 

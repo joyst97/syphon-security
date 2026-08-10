@@ -939,17 +939,24 @@
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                                 <div class="form-group">
                                     <label><i class="fa-solid fa-heading text-purple"></i> Panel Header Title</label>
-                                    <input type="text" id="studioTitle" value="👑 JOYST CORPORATION SUPPORT HUB" onkeyup="updateStudioPreview()">
+                                    <input type="text" id="studioTitle" value="🎫 Joyst Corporation Support" onkeyup="updateStudioPreview()">
                                 </div>
                                 <div class="form-group">
                                     <label><i class="fa-solid fa-palette text-pink"></i> Accent Color</label>
-                                    <input type="color" id="studioColor" value="#a855f7" onchange="updateStudioPreview()" style="height: 42px; cursor: pointer; padding: 4px; width: 100%;">
+                                    <input type="color" id="studioColor" value="#008080" onchange="updateStudioPreview()" style="height: 42px; cursor: pointer; padding: 4px; width: 100%;">
                                 </div>
                             </div>
 
                             <div class="form-group">
                                 <label><i class="fa-solid fa-align-left text-pink"></i> Panel Message Description</label>
-                                <textarea id="studioDesc" rows="3" onkeyup="updateStudioPreview()" style="width:100%; background:rgba(0,0,0,0.4); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:12px; font-family:inherit;">Welcome to JOYST CORPORATION Support Center! Select an option from the dropdown menu below to open a private 1-on-1 support ticket with our team.</textarea>
+                                <textarea id="studioDesc" rows="5" onkeyup="updateStudioPreview()" style="width:100%; background:rgba(0,0,0,0.4); color:#fff; border:1px solid rgba(255,255,255,0.1); border-radius:10px; padding:12px; font-family:inherit;"># Create Ticket
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+** Welcome To Joyst Corporation **
+
+・ Use Drop Down Menu And Select What You Want
+・ Our Staff Will Reach Out To You After Creating A Ticket
+・ Strictly Don't Create Tickets For Fun
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</textarea>
                             </div>
 
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
@@ -965,7 +972,7 @@
 
                             <div class="form-group">
                                 <label><i class="fa-solid fa-quote-right text-cyan"></i> Footer Text</label>
-                                <input type="text" id="studioFooter" value="JOYST CORPORATION Support OS • Select Category Below" onkeyup="updateStudioPreview()">
+                                <input type="text" id="studioFooter" value="© Joyst Corporation , All Rights Reserved." onkeyup="updateStudioPreview()">
                             </div>
 
                             <!-- Dynamic Custom Dropdown Options Builder -->
@@ -977,25 +984,32 @@
                                     </button>
                                 </div>
                                 <div id="studioOptionsContainer" style="display: flex; flex-direction: column; gap: 10px;">
-                                    <!-- Dynamic Option Item 1 -->
+                                    <!-- Option Item 1: Purchase Here -->
                                     <div class="option-row glass p-2 d-flex gap-2 align-items-center" style="border-radius: 8px; background: rgba(0,0,0,0.3);">
-                                        <input type="text" class="opt-emoji" value="🎫" placeholder="Emoji" style="width: 50px; text-align: center;" onkeyup="updateStudioPreview()">
-                                        <input type="text" class="opt-label" value="General Support" placeholder="Label" style="flex: 1;" onkeyup="updateStudioPreview()">
-                                        <input type="text" class="opt-desc" value="Questions & general assistance" placeholder="Description" style="flex: 2;" onkeyup="updateStudioPreview()">
+                                        <input type="text" class="opt-emoji" value="🛒" placeholder="Emoji" style="width: 50px; text-align: center;" onkeyup="updateStudioPreview()">
+                                        <input type="text" class="opt-label" value="Purchase Here" placeholder="Label" style="flex: 1;" onkeyup="updateStudioPreview()">
+                                        <input type="text" class="opt-desc" value="For purchase related queries" placeholder="Description" style="flex: 2;" onkeyup="updateStudioPreview()">
                                         <button class="btn btn-secondary btn-sm text-rose" onclick="removeStudioOption(this)">&times;</button>
                                     </div>
-                                    <!-- Dynamic Option Item 2 -->
+                                    <!-- Option Item 2: Buy Projects -->
+                                    <div class="option-row glass p-2 d-flex gap-2 align-items-center" style="border-radius: 8px; background: rgba(0,0,0,0.3);">
+                                        <input type="text" class="opt-emoji" value="🚀" placeholder="Emoji" style="width: 50px; text-align: center;" onkeyup="updateStudioPreview()">
+                                        <input type="text" class="opt-label" value="Buy Projects" placeholder="Label" style="flex: 1;" onkeyup="updateStudioPreview()">
+                                        <input type="text" class="opt-desc" value="For Purchasing Joyst Corporation Projects" placeholder="Description" style="flex: 2;" onkeyup="updateStudioPreview()">
+                                        <button class="btn btn-secondary btn-sm text-rose" onclick="removeStudioOption(this)">&times;</button>
+                                    </div>
+                                    <!-- Option Item 3: Request Support -->
+                                    <div class="option-row glass p-2 d-flex gap-2 align-items-center" style="border-radius: 8px; background: rgba(0,0,0,0.3);">
+                                        <input type="text" class="opt-emoji" value="⚠️" placeholder="Emoji" style="width: 50px; text-align: center;" onkeyup="updateStudioPreview()">
+                                        <input type="text" class="opt-label" value="Request Support" placeholder="Label" style="flex: 1;" onkeyup="updateStudioPreview()">
+                                        <input type="text" class="opt-desc" value="For technical support" placeholder="Description" style="flex: 2;" onkeyup="updateStudioPreview()">
+                                        <button class="btn btn-secondary btn-sm text-rose" onclick="removeStudioOption(this)">&times;</button>
+                                    </div>
+                                    <!-- Option Item 4: Buy Tools -->
                                     <div class="option-row glass p-2 d-flex gap-2 align-items-center" style="border-radius: 8px; background: rgba(0,0,0,0.3);">
                                         <input type="text" class="opt-emoji" value="🛠️" placeholder="Emoji" style="width: 50px; text-align: center;" onkeyup="updateStudioPreview()">
-                                        <input type="text" class="opt-label" value="Technical & Bug Report" placeholder="Label" style="flex: 1;" onkeyup="updateStudioPreview()">
-                                        <input type="text" class="opt-desc" value="Report bugs & bot errors" placeholder="Description" style="flex: 2;" onkeyup="updateStudioPreview()">
-                                        <button class="btn btn-secondary btn-sm text-rose" onclick="removeStudioOption(this)">&times;</button>
-                                    </div>
-                                    <!-- Dynamic Option Item 3 -->
-                                    <div class="option-row glass p-2 d-flex gap-2 align-items-center" style="border-radius: 8px; background: rgba(0,0,0,0.3);">
-                                        <input type="text" class="opt-emoji" value="💎" placeholder="Emoji" style="width: 50px; text-align: center;" onkeyup="updateStudioPreview()">
-                                        <input type="text" class="opt-label" value="Billing & Panel Purchase" placeholder="Label" style="flex: 1;" onkeyup="updateStudioPreview()">
-                                        <input type="text" class="opt-desc" value="Panel purchase & rank upgrades" placeholder="Description" style="flex: 2;" onkeyup="updateStudioPreview()">
+                                        <input type="text" class="opt-label" value="Buy Tools" placeholder="Label" style="flex: 1;" onkeyup="updateStudioPreview()">
+                                        <input type="text" class="opt-desc" value="To buy our tools" placeholder="Description" style="flex: 2;" onkeyup="updateStudioPreview()">
                                         <button class="btn btn-secondary btn-sm text-rose" onclick="removeStudioOption(this)">&times;</button>
                                     </div>
                                 </div>
@@ -1008,27 +1022,28 @@
 
                         <!-- Right Col: Real-time Discord Mock Preview Box -->
                         <div class="builder-preview-col">
-                            <div class="discord-embed-preview glass" id="studioEmbedBox" style="border-left-color: #a855f7;">
+                            <div class="discord-embed-preview glass" id="studioEmbedBox" style="border-left-color: #008080;">
                                 <div class="embed-author">
                                     <img src="/static/images/logo.png" class="embed-author-icon">
                                     <span>JOYST CORPORATION SERVICES • Ticket King</span>
                                 </div>
-                                <h4 class="embed-preview-title" id="studioPreviewTitle">👑 JOYST CORPORATION TICKET KING HUB</h4>
-                                <p class="embed-preview-desc" id="studioPreviewDesc">Welcome to JOYST CORPORATION Support Center! Select an option from the dropdown menu below to open a private 1-on-1 support ticket with our team.</p>
+                                <h4 class="embed-preview-title" id="studioPreviewTitle">🎫 Joyst Corporation Support</h4>
+                                <p class="embed-preview-desc" id="studioPreviewDesc"># Create Ticket<br>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━<br><b> Welcome To Joyst Corporation </b><br><br>・ Use Drop Down Menu And Select What You Want<br>・ Our Staff Will Reach Out To You After Creating A Ticket<br>・ Strictly Don't Create Tickets For Fun<br>━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</p>
                                 
                                 <div class="mock-dropdown">
-                                    <span>🎫 Choose Ticket Category...</span>
+                                    <span>Click here to Buy Panel / Projects & For Support</span>
                                     <i class="fa-solid fa-chevron-down"></i>
                                 </div>
 
                                 <div class="mock-dropdown-options" id="studioPreviewOptions">
-                                    <div class="mock-option"><span>🎫 General Support</span> <small>Questions & general assistance</small></div>
-                                    <div class="mock-option"><span>🛠️ Technical & Bug Report</span> <small>Report bugs & bot errors</small></div>
-                                    <div class="mock-option"><span>💎 Billing & Panel Purchase</span> <small>Panel purchase & rank upgrades</small></div>
+                                    <div class="mock-option"><span>🛒 Purchase Here</span> <small>For purchase related queries</small></div>
+                                    <div class="mock-option"><span>🚀 Buy Projects</span> <small>For Purchasing Joyst Corporation Projects</small></div>
+                                    <div class="mock-option"><span>⚠️ Request Support</span> <small>For technical support</small></div>
+                                    <div class="mock-option"><span>🛠️ Buy Tools</span> <small>To buy our tools</small></div>
                                 </div>
 
                                 <div class="embed-preview-footer text-muted font-mono" id="studioPreviewFooter" style="font-size: 11px; margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 8px;">
-                                    JOYST CORPORATION Support OS • Select Category Below
+                                    © Joyst Corporation , All Rights Reserved.
                                 </div>
                             </div>
                         </div>

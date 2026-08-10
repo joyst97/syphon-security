@@ -664,18 +664,55 @@ def api_giveaways_end():
     db.add_audit_log(guild_id, "GIVEAWAY_END", f"Ended giveaway ID {message_id} early.", severity="MEDIUM")
     return jsonify({"success": True, "message": "Giveaway ended."})
 
+def parse_discord_emoji_object(emoji_input):
+    if not emoji_input:
+        return "🎫"
+    if isinstance(emoji_input, discord.PartialEmoji):
+        return emoji_input
+    
+    emoji_str = str(emoji_input).strip().lstrip('\\')
+
+    if (emoji_str.startswith("<:") or emoji_str.startswith("<a:")) and emoji_str.endswith(">"):
+        try:
+            return discord.PartialEmoji.from_str(emoji_str)
+        except Exception:
+            pass
+
+    cdn_match = re.search(r'emojis/(\d+)\.(gif|png|webp)', emoji_str)
+    if cdn_match:
+        emoji_id = int(cdn_match.group(1))
+        animated = (cdn_match.group(2) == "gif")
+        return discord.PartialEmoji(name="emoji", id=emoji_id, animated=animated)
+
+    if emoji_str.isdigit():
+        return discord.PartialEmoji(name="emoji", id=int(emoji_str), animated=True)
+
+    return emoji_str
+
+def format_discord_embed_text(text: str) -> str:
+    if not text:
+        return ""
+    text = re.sub(r'\\(<a?:\w+:\d+>)', r'\1', text)
+    def cdn_repl(m):
+        e_id = m.group(1)
+        ext = m.group(2)
+        anim = "a" if ext == "gif" else ""
+        return f"<{anim}:emoji:{e_id}>"
+    text = re.sub(r'https?://cdn\.discordapp\.com/emojis/(\d+)\.(gif|png|webp)(\?\S+)?', cdn_repl, text)
+    return text
+
 @app.route("/api/tickets/create_panel", methods=["POST"])
 def api_tickets_create_panel():
     data = request.json or {}
     guild_id = resolve_guild_id(data.get("guild_id"))
     channel_id = data.get("channel_id") or str(config.AI_CHAT_CHANNEL_ID)
     
-    title = data.get("title", "👑 JOYST CORPORATION TICKET KING HUB")
-    description = data.get("description", "Select an option from the menu below to open a private support ticket.")
-    color_hex = data.get("color", "#a855f7")
+    title = format_discord_embed_text(data.get("title", "🎫 Joyst Corporation Support"))
+    description = format_discord_embed_text(data.get("description", "Select an option from the menu below to open a private support ticket."))
+    color_hex = data.get("color", "#008080")
     thumbnail_url = data.get("thumbnail_url")
     banner_url = data.get("banner_url")
-    footer_text = data.get("footer_text", f"{config.SERVER_NAME} Support OS • Select Category Below")
+    footer_text = format_discord_embed_text(data.get("footer_text", "© Joyst Corporation , All Rights Reserved."))
     options_list = data.get("options", [])
 
     if not channel_id or not str(channel_id).isdigit():
@@ -688,7 +725,7 @@ def api_tickets_create_panel():
                 if not ch:
                     ch = await bot_instance.fetch_channel(int(channel_id))
 
-                c_val = 0xa855f7
+                c_val = 0x008080
                 if color_hex and color_hex.startswith("#"):
                     try: c_val = int(color_hex.lstrip("#"), 16)
                     except Exception: pass
@@ -706,30 +743,34 @@ def api_tickets_create_panel():
                 if footer_text:
                     embed.set_footer(text=footer_text)
 
-                # Dynamically construct Select Dropdown Options
+                # Use official Ticket Verse View if standard panel or default options
+                if not options_list:
+                    from cogs.tickets import TicketView
+                    panel_msg = await ch.send(embed=embed, view=TicketView(bot_instance=bot_instance))
+                    cfg = db.load_config() if hasattr(db, "load_config") else {}
+                    cfg['panel_message_id'] = panel_msg.id
+                    cfg['panel_channel_id'] = panel_msg.channel.id
+                    db.save_config(cfg) if hasattr(db, "save_config") else None
+                    db.add_audit_log(guild_id, "TICKET_PANEL", f"Deployed official Joyst Ticket Verse panel to #{ch.name}.", severity="MEDIUM")
+                    return {"success": True, "message": f"Official Joyst Ticket Panel deployed to #{ch.name}!"}
+
+                # Dynamically construct Select Dropdown Options if custom options provided
                 select_options = []
-                if options_list and isinstance(options_list, list) and len(options_list) > 0:
-                    for opt in options_list[:25]:
-                        select_options.append(
-                            discord.SelectOption(
-                                label=opt.get("label", "Support")[:100],
-                                value=opt.get("value", opt.get("label", "support")).lower().replace(" ", "_")[:90],
-                                description=opt.get("description", "Click to open ticket")[:100],
-                                emoji=opt.get("emoji", "🎫") or "🎫"
-                            )
+                for opt in options_list[:25]:
+                    raw_emoji = opt.get("emoji", "🎫") or "🎫"
+                    parsed_emoji = parse_discord_emoji_object(raw_emoji)
+                    select_options.append(
+                        discord.SelectOption(
+                            label=opt.get("label", "Support")[:100],
+                            value=opt.get("value", opt.get("label", "support")).lower().replace(" ", "_")[:90],
+                            description=opt.get("description", "Click to open ticket")[:100],
+                            emoji=parsed_emoji
                         )
-                else:
-                    select_options = [
-                        discord.SelectOption(label="General Support", value="general", description="Questions, general assistance & server help", emoji="🎫"),
-                        discord.SelectOption(label="Technical & Bug Report", value="tech", description="Report bugs, bot errors or technical issues", emoji="🛠️"),
-                        discord.SelectOption(label="Billing & Purchases", value="billing", description="Panel purchase, VIP, boosts & billing queries", emoji="💎"),
-                        discord.SelectOption(label="Player Report & Appeals", value="appeal", description="Report rule violations or appeal timeouts/bans", emoji="🛡️"),
-                        discord.SelectOption(label="Partnerships & Business", value="partner", description="Server partnerships, sponsorships & collabs", emoji="🤝")
-                    ]
+                    )
 
                 class CustomTicketDropdownSelect(discord.ui.Select):
                     def __init__(self, opts):
-                        super().__init__(placeholder="Choose Ticket Category...", min_values=1, max_values=1, options=opts, custom_id="custom_ticket_select")
+                        super().__init__(placeholder="Click here to Buy Panel / Projects & For Support", min_values=1, max_values=1, options=opts, custom_id="custom_ticket_select")
 
                     async def callback(self, interaction: discord.Interaction):
                         cat_choice = self.values[0]
@@ -744,9 +785,9 @@ def api_tickets_create_panel():
                                 await interaction.response.send_message(f"⚠️ You already have an open ticket in {existing_ch.mention}!", ephemeral=True)
                                 return
 
-                        category = discord.utils.get(guild.categories, name="🎫 TICKET KING SUPPORT")
+                        category = discord.utils.get(guild.categories, name="🎫 TICKETS")
                         if not category:
-                            try: category = await guild.create_category("🎫 TICKET KING SUPPORT")
+                            try: category = await guild.create_category("🎫 TICKETS")
                             except Exception: category = None
 
                         overwrites = {
@@ -761,10 +802,10 @@ def api_tickets_create_panel():
                         w_embed = discord.Embed(
                             title=f"🎟️ Ticket — {cat_choice.replace('_', ' ').title()}",
                             description=f"Hello {user.mention}, thank you for reaching out to **{guild.name} Staff**!\nPlease describe your issue or request in detail below.",
-                            color=discord.Color.from_rgb(168, 85, 247)
+                            color=discord.Color.teal()
                         )
-                        from cogs.tickets import TicketControlView
-                        await ticket_ch.send(content=f"{user.mention} Welcome!", embed=w_embed, view=TicketControlView(user.id))
+                        from cogs.tickets import TicketCloseView
+                        await ticket_ch.send(content=f"{user.mention} Welcome!", embed=w_embed, view=TicketCloseView())
                         await interaction.response.send_message(f"✅ Ticket created: {ticket_ch.mention}", ephemeral=True)
 
                 class CustomTicketView(discord.ui.View):
@@ -774,8 +815,8 @@ def api_tickets_create_panel():
 
                 view = CustomTicketView(select_options)
                 await ch.send(embed=embed, view=view)
-                db.add_audit_log(guild_id, "TICKET_PANEL", f"Deployed custom Ticket King panel to #{ch.name}.", severity="MEDIUM")
-                return {"success": True, "message": f"Custom Ticket King Panel deployed to #{ch.name}!"}
+                db.add_audit_log(guild_id, "TICKET_PANEL", f"Deployed custom Ticket panel to #{ch.name}.", severity="MEDIUM")
+                return {"success": True, "message": f"Custom Ticket Panel deployed to #{ch.name}!"}
 
             future = asyncio.run_coroutine_threadsafe(dispatch_ticket_panel(), bot_instance.loop)
             res = future.result(timeout=15)

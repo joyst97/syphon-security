@@ -2053,11 +2053,69 @@ function removeStudioOption(btn) {
     updateStudioPreview();
 }
 
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.toString()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function parseDiscordEmojis(text) {
+    if (!text) return '';
+    let str = text.toString();
+    
+    // Strip backslashes if user typed \:name:id or \<a:name:id>
+    str = str.replace(/\\(<a?:[\w~-]+:\d+>)/g, '$1');
+
+    const emojiRegex = /<(a?):([\w~-]+):(\d{17,20})>/g;
+    const urlRegex = /https?:\/\/cdn\.discordapp\.com\/emojis\/(\d{17,20})\.(gif|png|webp)(\?\S+)?/gi;
+    const rawIdRegex = /^\d{17,20}$/;
+
+    let tokens = [];
+    
+    // Replace custom emojis <a:name:id> or <:name:id>
+    str = str.replace(emojiRegex, (match, animatedPrefix, emojiName, emojiId) => {
+        const ext = (animatedPrefix === 'a') ? 'gif' : 'png';
+        const token = `___EMOJI_${tokens.length}___`;
+        tokens.push(`<img src="https://cdn.discordapp.com/emojis/${emojiId}.${ext}?size=64&quality=lossless" alt="${escapeHTML(emojiName)}" class="discord-emoji-img" style="height: 24px; width: auto; vertical-align: middle; display: inline-block; margin: 0 2px;" onerror="if(!this.dataset.retry){this.dataset.retry=1;this.src='https://cdn.discordapp.com/emojis/${emojiId}.gif';}">`);
+        return token;
+    });
+
+    // Replace Discord CDN URLs
+    str = str.replace(urlRegex, (match, emojiId) => {
+        const token = `___EMOJI_${tokens.length}___`;
+        tokens.push(`<img src="https://cdn.discordapp.com/emojis/${emojiId}.gif?size=64&quality=lossless" alt="emoji" class="discord-emoji-img" style="height: 24px; width: auto; vertical-align: middle; display: inline-block; margin: 0 2px;">`);
+        return token;
+    });
+
+    // Replace single raw numeric emoji ID
+    if (rawIdRegex.test(str.trim())) {
+        const emojiId = str.trim();
+        const token = `___EMOJI_${tokens.length}___`;
+        tokens.push(`<img src="https://cdn.discordapp.com/emojis/${emojiId}.gif?size=64&quality=lossless" alt="emoji" class="discord-emoji-img" style="height: 24px; width: auto; vertical-align: middle; display: inline-block; margin: 0 2px;">`);
+        str = token;
+    }
+
+    // Safely HTML escape remaining text
+    let safeHtml = escapeHTML(str);
+    safeHtml = safeHtml.replace(/\n/g, '<br>');
+
+    // Restore emoji img tokens
+    tokens.forEach((imgTag, i) => {
+        safeHtml = safeHtml.replace(`___EMOJI_${i}___`, imgTag);
+    });
+
+    return safeHtml;
+}
+
 function updateStudioPreview() {
-    const title = document.getElementById('studioTitle')?.value || '👑 JOYST CORPORATION TICKET KING HUB';
+    const title = document.getElementById('studioTitle')?.value || '🎫 Joyst Corporation Support';
     const desc = document.getElementById('studioDesc')?.value || 'Select an option below...';
-    const color = document.getElementById('studioColor')?.value || '#a855f7';
-    const footer = document.getElementById('studioFooter')?.value || 'JOYST CORPORATION Support OS';
+    const color = document.getElementById('studioColor')?.value || '#008080';
+    const footer = document.getElementById('studioFooter')?.value || '© Joyst Corporation , All Rights Reserved.';
 
     const pTitle = document.getElementById('studioPreviewTitle');
     const pDesc = document.getElementById('studioPreviewDesc');
@@ -2065,9 +2123,9 @@ function updateStudioPreview() {
     const pBox = document.getElementById('studioEmbedBox');
     const pOptsContainer = document.getElementById('studioPreviewOptions');
 
-    if (pTitle) pTitle.textContent = title;
-    if (pDesc) pDesc.textContent = desc;
-    if (pFooter) pFooter.textContent = footer;
+    if (pTitle) pTitle.innerHTML = parseDiscordEmojis(title);
+    if (pDesc) pDesc.innerHTML = parseDiscordEmojis(desc);
+    if (pFooter) pFooter.innerHTML = parseDiscordEmojis(footer);
     if (pBox) pBox.style.borderLeftColor = color;
 
     if (pOptsContainer) {
@@ -2080,7 +2138,7 @@ function updateStudioPreview() {
 
             const optDiv = document.createElement('div');
             optDiv.className = 'mock-option';
-            optDiv.innerHTML = `<span>${emoji} ${label}</span> <small>${optionDesc}</small>`;
+            optDiv.innerHTML = `<span>${parseDiscordEmojis(emoji)} ${label}</span> <small>${optionDesc}</small>`;
             pOptsContainer.appendChild(optDiv);
         });
     }

@@ -150,17 +150,19 @@ class AegisBot(commands.Bot):
 
         # Register persistent UI listeners so buttons/dropdowns NEVER time out or fail after restart
         try:
-            from cogs.tickets import TicketKingDropdownView, TicketControlView
+            from cogs.tickets import TicketCloseView, TicketClaimView, TicketFAQView, TicketView
             from cogs.music import ProtectedMusicControlView
             from cogs.anti_raid import VerificationView
             from cogs.giveaway import GiveawayEntryView
 
-            self.add_view(TicketKingDropdownView())
-            self.add_view(TicketControlView())
+            self.add_view(TicketCloseView())
+            self.add_view(TicketClaimView())
+            self.add_view(TicketFAQView())
+            self.add_view(TicketView(bot_instance=self))
             self.add_view(ProtectedMusicControlView())
             self.add_view(VerificationView())
             self.add_view(GiveawayEntryView(message_id=""))
-            logger.info("Registered all persistent UI Views (Ticket, Music, Verification & Giveaway listeners active).")
+            logger.info("Registered all persistent UI Views (Ticket Verse, Music, Verification & Giveaway listeners active).")
         except Exception as e:
             logger.error(f"Error registering persistent UI views: {e}")
 

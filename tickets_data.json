@@ -1,0 +1,87 @@
+{
+    "active": {
+        "1253391499027157116": {
+            "channel_id": 1524377610191114240,
+            "type": "support",
+            "owner_name": "snowcheats"
+        },
+        "1512849695410618444": {
+            "channel_id": 1525877803734798426,
+            "type": "purchase",
+            "owner_name": "sam.ffrr"
+        },
+        "608374267608039424": {
+            "channel_id": 1526128510500999230,
+            "type": "purchase",
+            "owner_name": "spideyyy5558"
+        },
+        "1390358560478728264": {
+            "channel_id": 1526135619783229501,
+            "type": "exchange",
+            "owner_name": "vb_exe"
+        },
+        "1360969841133092905": {
+            "channel_id": 1526280479660048394,
+            "type": "support",
+            "owner_name": "odin_live01",
+            "created_at": "2026-07-13T23:03:35.416521"
+        }
+    },
+    "closed": {
+        "1503271420728184873": {
+            "user_id": "1220750083566473327",
+            "channel_id": 1503271420728184873,
+            "type": "support",
+            "owner_name": "sam.alok",
+            "closed_at": "2026-05-11T11:15:13.331140",
+            "closed_by": "1278202556585082911",
+            "closed_by_name": "xx.shiro_oni.xx"
+        },
+        "1512287671446405233": {
+            "user_id": "1510118949172547627",
+            "channel_id": 1512287671446405233,
+            "type": "support",
+            "owner_name": "devilmaycry_00",
+            "closed_at": "2026-06-05T19:45:24.139263",
+            "closed_by": "1511566039299653806",
+            "closed_by_name": "stevedaddy0898"
+        },
+        "1524598536602124338": {
+            "user_id": "791326681872334849",
+            "channel_id": 1524598536602124338,
+            "type": "purchase",
+            "owner_name": "sanjubhai4075",
+            "closed_at": "2026-07-13T22:53:07.531609",
+            "closed_by": "0",
+            "closed_by_name": "System (Inactivity)"
+        },
+        "1524729445963923576": {
+            "user_id": "1358095667196727467",
+            "channel_id": 1524729445963923576,
+            "type": "purchase",
+            "owner_name": "ayush038412",
+            "closed_at": "2026-07-13T22:53:21.565970",
+            "closed_by": "0",
+            "closed_by_name": "System (Inactivity)"
+        },
+        "1525093515703484497": {
+            "user_id": "1297472144560754700",
+            "channel_id": 1525093515703484497,
+            "type": "purchase",
+            "owner_name": "apnashubhambhai",
+            "closed_at": "2026-07-13T22:53:38.063134",
+            "closed_by": "0",
+            "closed_by_name": "System (Inactivity)"
+        },
+        "1525336926427807886": {
+            "user_id": "1455481742285869138",
+            "channel_id": 1525336926427807886,
+            "type": "purchase",
+            "owner_name": "navya4x_",
+            "closed_at": "2026-07-13T22:53:51.882793",
+            "closed_by": "0",
+            "closed_by_name": "System (Inactivity)"
+        }
+    },
+    "staff_stats": {}
+}
