@@ -7,7 +7,12 @@ import asyncio
 import os
 import logging
 from datetime import datetime, timezone
-import chat_exporter
+try:
+    import chat_exporter
+    HAS_CHAT_EXPORTER = True
+except ModuleNotFoundError:
+    HAS_CHAT_EXPORTER = False
+    logging.getLogger("AEGIS.Tickets").warning("chat_exporter module not installed. Fallback transcript exporter active.")
 
 import config
 import database as db
@@ -302,16 +307,24 @@ async def send_transcript(channel: discord.TextChannel, ticket_owner_id: str, ti
             pass
 
     try:
-        html_content = await chat_exporter.export(
-            channel,
-            guild=channel.guild,
-            bot=bot_instance,
-            tz_info="UTC"
-        )
+        html_content = None
+        if HAS_CHAT_EXPORTER:
+            try:
+                html_content = await chat_exporter.export(
+                    channel,
+                    guild=channel.guild,
+                    bot=bot_instance,
+                    tz_info="UTC"
+                )
+            except Exception as e_exp:
+                logger.error(f"chat_exporter error: {e_exp}")
+                html_content = None
 
         if not html_content:
-            await channel.send("Failed to generate transcript.", delete_after=15)
-            return
+            lines = [f"Ticket Transcript for #{channel.name} (ID: {channel.id})\nGenerated: {datetime.now(timezone.utc)}\n" + "="*60 + "\n"]
+            async for msg in channel.history(limit=500, oldest_first=True):
+                lines.append(f"[{msg.created_at.strftime('%Y-%m-%d %H:%M:%S')}] {msg.author} ({msg.author.id}): {msg.content}")
+            html_content = "\n".join(lines)
 
         html_content_bytes = html_content.encode('utf-8') if isinstance(html_content, str) else html_content
 
@@ -1103,7 +1116,7 @@ class Tickets(commands.Cog):
 
     # --- COMMANDS ---
 
-    @commands.command(name="ticketpanel", aliases=["tp"])
+    @commands.command(name="ticketpanel", aliases=["tp", "ticket", "tickets"])
     async def ticket_panel_prefix(self, ctx: commands.Context):
         """Send the official Joyst Corporation Ticket Creation Panel"""
         cfg = load_config()
@@ -1160,6 +1173,14 @@ class Tickets(commands.Cog):
         cfg['panel_message_id'] = panel_msg.id
         cfg['panel_channel_id'] = panel_msg.channel.id
         save_config(cfg)
+
+    @app_commands.command(name="ticket", description="Displays the ticket creation panel for users.")
+    async def ticket_slash(self, interaction: discord.Interaction):
+        await self.ticket_panel_slash(interaction)
+
+    @app_commands.command(name="tickets", description="Displays the ticket creation panel for users.")
+    async def tickets_slash(self, interaction: discord.Interaction):
+        await self.ticket_panel_slash(interaction)
 
     @commands.command(name="remind")
     async def remind_prefix(self, ctx: commands.Context):

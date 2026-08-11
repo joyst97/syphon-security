@@ -169,23 +169,22 @@ class AegisBot(commands.Bot):
         async def sync_slash():
             await self.wait_until_ready()
             try:
-                # 1. Clear any leftover guild-specific command copies to prevent DUPLICATE commands in slash picker UI!
+                # 1. Clear any leftover guild-level overrides to remove duplicate slash commands in Discord UI!
                 for guild in self.guilds:
                     try:
-                        guild_obj = discord.Object(id=guild.id)
-                        self.tree.clear_commands(guild=guild_obj)
-                        await self.tree.sync(guild=guild_obj)
+                        self.tree.clear_commands(guild=guild)
+                        await self.tree.sync(guild=guild)
                     except Exception:
                         pass
 
-                # 2. Sync clean Global Slash Commands (1 Single Copy per command!)
+                # 2. Sync single clean Global Slash Command tree (Zero Duplicates!)
                 synced_global = await self.tree.sync()
-                logger.info(f"⚡ Global Slash Sync: Registered {len(synced_global)} clean global commands (Zero Duplicates).")
+                logger.info(f"⚡ Clean Global Slash Sync: Registered {len(synced_global)} single-copy commands (Zero Duplicates).")
                 logger.info("✅ All Slash & Prefix Commands 100% Auto-Synced & Active Across All Servers!")
             except Exception as e:
                 logger.error(f"Error syncing slash commands: {e}")
 
-        self.loop.create_task(sync_slash())
+        asyncio.create_task(sync_slash())
 
     async def on_ready(self):
         logger.info(f"═══════════════════════════════════════════════════════════")
@@ -207,10 +206,10 @@ class AegisBot(commands.Bot):
                 logger.error(f"Error initializing guild {guild.name}: {e}")
 
         # Start dynamic 3-text rotating presence status loop
-        self.loop.create_task(self.rotate_status_loop())
+        asyncio.create_task(self.rotate_status_loop())
 
         # Start real-time Web Dashboard IPC command listener
-        self.loop.create_task(self.check_dashboard_ipc_loop())
+        asyncio.create_task(self.check_dashboard_ipc_loop())
 
         # Broadcast startup embed log to security log channel
         await send_bot_startup_embed(self)

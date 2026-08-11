@@ -10,3 +10,5 @@ static-ffmpeg>=3.0.0
 gunicorn>=21.2.0
 psutil>=5.9.8
 audioop-lts>=0.2.1; python_version >= "3.13"
+chat-exporter>=2.6.0
+

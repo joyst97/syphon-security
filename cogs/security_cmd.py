@@ -750,10 +750,13 @@ class SecurityCmd(commands.Cog):
         if not is_admin_or_owner(ctx):
             await ctx.send("❌ Only Server Owner or Administrators can use this command.")
             return
-        await ctx.send("⚡ Syncing all slash commands to Discord...")
+        await ctx.send("⚡ Syncing clean single-copy slash commands...")
         try:
+            if ctx.guild:
+                self.bot.tree.clear_commands(guild=ctx.guild)
+                await self.bot.tree.sync(guild=ctx.guild)
             synced = await self.bot.tree.sync()
-            await ctx.send(f"✅ Successfully synced `{len(synced)}` slash commands globally!")
+            await ctx.send(f"✅ Successfully synced `{len(synced)}` clean slash commands (Zero Duplicates)!")
         except Exception as e:
             await ctx.send(f"❌ Sync failed: `{e}`")
 
@@ -764,8 +767,11 @@ class SecurityCmd(commands.Cog):
             return
         await interaction.response.defer(ephemeral=True)
         try:
+            if interaction.guild:
+                self.bot.tree.clear_commands(guild=interaction.guild)
+                await self.bot.tree.sync(guild=interaction.guild)
             synced = await self.bot.tree.sync()
-            await interaction.followup.send(f"✅ Successfully synced `{len(synced)}` slash commands globally!")
+            await interaction.followup.send(f"✅ Successfully synced `{len(synced)}` clean slash commands (Zero Duplicates)!")
         except Exception as e:
             await interaction.followup.send(f"❌ Sync failed: `{e}`")
 
