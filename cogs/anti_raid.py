@@ -66,13 +66,13 @@ class AntiRaid(commands.Cog):
         # Register persistent verification view
         self.bot.add_view(VerificationView())
 
-    def _is_raid_velocity(self, guild_id: str, limit: int = 5, window: int = 10) -> bool:
+    def _is_raid_velocity(self, guild_id: str, limit: int = 10, window: int = 10) -> bool:
         now = time.time()
         joins = self.join_trackers[guild_id]
         joins = [t for t in joins if now - t <= window]
         joins.append(now)
         self.join_trackers[guild_id] = joins
-        return len(joins) >= limit
+        return len(joins) > limit
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
@@ -86,8 +86,8 @@ class AntiRaid(commands.Cog):
         if not settings.get("anti_raid"):
             return
 
-        # Check Join Velocity
-        if self._is_raid_velocity(guild_id_str):
+        # Check Join Velocity (>10 joins in 10 seconds)
+        if self._is_raid_velocity(guild_id_str, limit=10, window=10):
             if not self.raid_mode_active[guild_id_str]:
                 self.raid_mode_active[guild_id_str] = True
                 logger.warning(f"Raid mode automatically ACTIVATED for guild {guild.name} ({guild.id})")
@@ -95,7 +95,7 @@ class AntiRaid(commands.Cog):
                 db.add_audit_log(
                     guild_id=guild_id_str,
                     action_type="ANTI_RAID_ACTIVATED",
-                    details=f"High join velocity detected (>5 joins in 10s). Automated Raid Shield Engaged.",
+                    details=f"High join velocity detected (>10 joins in 10s). Automated Raid Shield Engaged.",
                     severity="HIGH"
                 )
 
@@ -127,27 +127,8 @@ class AntiRaid(commands.Cog):
                     except Exception as e:
                         logger.error(f"Failed to assign unverified role to {member.id}: {e}")
 
-        # Account age verification check during Raid Mode
-        if self.raid_mode_active[guild_id_str]:
-            account_age_hours = (discord.utils.utcnow() - member.created_at).total_seconds() / 3600
-            if account_age_hours < 24: # Less than 24 hours old account
-                try:
-                    await member.send(f"🛡️ Security Notice from **{guild.name}**: Your account was created recently and anti-raid mode is active. You have been temporarily kicked for server safety.")
-                except Exception:
-                    pass
-
-                try:
-                    await member.kick(reason="[AEGIS Anti-Raid] Young account (<24h) joined during active Raid Mode.")
-                    db.add_audit_log(
-                        guild_id=guild_id_str,
-                        action_type="ANTI_RAID_KICK",
-                        details=f"Kicked suspicious young account {member} ({member.id}) created {account_age_hours:.1f}h ago.",
-                        culprit_id=str(member.id),
-                        culprit_name=str(member),
-                        severity="MEDIUM"
-                    )
-                except Exception as e:
-                    logger.error(f"Failed to kick young account during raid mode: {e}")
+        # All human member joins are 100% allowed with ZERO kicks or bans.
+        pass
 
 async def setup(bot):
     await bot.add_cog(AntiRaid(bot))

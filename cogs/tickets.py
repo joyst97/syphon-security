@@ -1116,71 +1116,55 @@ class Tickets(commands.Cog):
 
     # --- COMMANDS ---
 
+    async def _send_ticket_panel(self, interaction_or_ctx):
+        is_interaction = isinstance(interaction_or_ctx, discord.Interaction)
+        guild = interaction_or_ctx.guild
+        cfg = load_config()
+        banner_url = cfg.get("banner_url") or (guild.banner.url if guild and guild.banner else None)
+
+        embed = discord.Embed(
+            title="🎫 **Joyst Corporation Support**",
+            description="# <a:13969niebieskipiorun:1441085314272722959> Create Ticket\n"
+                        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                        "** Welcome To Joyst Corporation **\n\n"
+                        "・ Use Drop Down Menu And Select What You Want\n"
+                        "・ Our Staff Will Reach Out To You After Creating A Ticket\n"
+                        "・ Strictly Don't Create Tickets For Fun\n"
+                        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+            color=discord.Color.teal()
+        )
+        embed.set_footer(text="© Joyst Corporation , All Rights Reserved.")
+        if guild and guild.icon:
+            embed.set_thumbnail(url=guild.icon.url)
+        if banner_url:
+            embed.set_image(url=banner_url)
+
+        if is_interaction:
+            await interaction_or_ctx.response.send_message(embed=embed, view=TicketView(bot_instance=self.bot), ephemeral=False)
+            panel_msg = await interaction_or_ctx.original_response()
+        else:
+            panel_msg = await interaction_or_ctx.send(embed=embed, view=TicketView(bot_instance=self.bot))
+
+        cfg['panel_message_id'] = panel_msg.id
+        cfg['panel_channel_id'] = panel_msg.channel.id
+        save_config(cfg)
+
     @commands.command(name="ticketpanel", aliases=["tp", "ticket", "tickets"])
     async def ticket_panel_prefix(self, ctx: commands.Context):
         """Send the official Joyst Corporation Ticket Creation Panel"""
-        cfg = load_config()
-        banner_url = cfg.get("banner_url") or (ctx.guild.banner.url if ctx.guild and ctx.guild.banner else None)
-
-        embed = discord.Embed(
-            title="🎫 **Joyst Corporation Support**",
-            description="# <a:13969niebieskipiorun:1441085314272722959> Create Ticket\n"
-                        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-                        "** Welcome To Joyst Corporation **\n\n"
-                        "・ Use Drop Down Menu And Select What You Want\n"
-                        "・ Our Staff Will Reach Out To You After Creating A Ticket\n"
-                        "・ Strictly Don't Create Tickets For Fun\n"
-                        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-            color=discord.Color.teal()
-        )
-        embed.set_footer(text="© Joyst Corporation , All Rights Reserved.")
-        if ctx.guild and ctx.guild.icon:
-            embed.set_thumbnail(url=ctx.guild.icon.url)
-        if banner_url:
-            embed.set_image(url=banner_url)
-
-        panel_msg = await ctx.send(embed=embed, view=TicketView(bot_instance=self.bot))
-
-        cfg['panel_message_id'] = panel_msg.id
-        cfg['panel_channel_id'] = panel_msg.channel.id
-        save_config(cfg)
+        await self._send_ticket_panel(ctx)
 
     @app_commands.command(name="ticketpanel", description="Displays the ticket creation panel for users.")
     async def ticket_panel_slash(self, interaction: discord.Interaction):
-        cfg = load_config()
-        banner_url = cfg.get("banner_url") or (interaction.guild.banner.url if interaction.guild and interaction.guild.banner else None)
-
-        embed = discord.Embed(
-            title="🎫 **Joyst Corporation Support**",
-            description="# <a:13969niebieskipiorun:1441085314272722959> Create Ticket\n"
-                        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-                        "** Welcome To Joyst Corporation **\n\n"
-                        "・ Use Drop Down Menu And Select What You Want\n"
-                        "・ Our Staff Will Reach Out To You After Creating A Ticket\n"
-                        "・ Strictly Don't Create Tickets For Fun\n"
-                        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-            color=discord.Color.teal()
-        )
-        embed.set_footer(text="© Joyst Corporation , All Rights Reserved.")
-        if interaction.guild and interaction.guild.icon:
-            embed.set_thumbnail(url=interaction.guild.icon.url)
-        if banner_url:
-            embed.set_image(url=banner_url)
-
-        await interaction.response.send_message(embed=embed, view=TicketView(bot_instance=self.bot), ephemeral=False)
-        panel_msg = await interaction.original_response()
-
-        cfg['panel_message_id'] = panel_msg.id
-        cfg['panel_channel_id'] = panel_msg.channel.id
-        save_config(cfg)
+        await self._send_ticket_panel(interaction)
 
     @app_commands.command(name="ticket", description="Displays the ticket creation panel for users.")
     async def ticket_slash(self, interaction: discord.Interaction):
-        await self.ticket_panel_slash(interaction)
+        await self._send_ticket_panel(interaction)
 
     @app_commands.command(name="tickets", description="Displays the ticket creation panel for users.")
     async def tickets_slash(self, interaction: discord.Interaction):
-        await self.ticket_panel_slash(interaction)
+        await self._send_ticket_panel(interaction)
 
     @commands.command(name="remind")
     async def remind_prefix(self, ctx: commands.Context):

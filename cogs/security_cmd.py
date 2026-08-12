@@ -196,14 +196,15 @@ class SecurityCmd(commands.Cog):
         is_nuke_on = bool(settings.get("anti_nuke", 0))
 
         st_nuke = e_tick if is_nuke_on else e_cross
-        st_role = e_tick if is_nuke_on else e_cross
-        st_channel = e_tick if is_nuke_on else e_cross
-        st_webhook = e_tick if is_nuke_on else e_cross
-        st_botadd = e_tick if is_nuke_on else e_cross
-        st_vanity = e_tick if is_nuke_on else e_cross
-        st_emoji = e_tick if is_nuke_on else e_cross
-        st_prune = e_tick if is_nuke_on else e_cross
-        st_mention = e_tick if is_nuke_on else e_cross
+        st_role = e_tick if (is_nuke_on and bool(settings.get("anti_role", 1))) else e_cross
+        st_channel = e_tick if (is_nuke_on and bool(settings.get("anti_channel", 1))) else e_cross
+        st_webhook = e_tick if (is_nuke_on and bool(settings.get("anti_webhook", 1))) else e_cross
+        st_botadd = e_tick if (is_nuke_on and bool(settings.get("anti_bot", 1))) else e_cross
+        st_vanity = e_tick if (is_nuke_on and bool(settings.get("anti_vanity", 1))) else e_cross
+        st_emoji = e_tick if (is_nuke_on and bool(settings.get("anti_emoji", 1))) else e_cross
+        st_prune = e_tick if (is_nuke_on and bool(settings.get("anti_prune", 1))) else e_cross
+        st_mention = e_tick if (is_nuke_on and bool(settings.get("anti_mention", 1))) else e_cross
+        st_raid = e_tick if bool(settings.get("anti_raid", 0)) else e_cross
 
         whitelists = db.get_whitelists(str(guild.id))
         wl_count = len(whitelists)

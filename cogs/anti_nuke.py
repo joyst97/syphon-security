@@ -308,38 +308,8 @@ class AntiNuke(commands.Cog):
                     await self._quarantine_and_kick(guild, member, "Unauthorized Webhook creation (Potential Webhook Nuke Attempt).", ban_user=True)
             break
 
-    # --- 6. ANTI-UNAUTHORIZED INVITE CREATION (ROLE-LINK / VANITY NUKE) ---
+    # --- 6. ANTI-UNAUTHORIZED INVITE CREATION (DISABLED) ---
 
-    @commands.Cog.listener()
-    async def on_invite_create(self, invite: discord.Invite):
-        """Safeguard against unwhitelisted admins creating unauthorized invite links or role-invites!"""
-        guild = invite.guild
-        if not guild:
-            return
-
-        settings = db.get_guild_settings(str(guild.id))
-        if not settings.get("anti_nuke", 1):
-            return
-
-        inviter = invite.inviter
-        if is_owner_or_immune(inviter, guild, self.bot):
-            return
-
-        # UNWHITELISTED ADMIN CREATED AN INVITE LINK -> DELETE INVITE & BAN ADMIN IMMEDIATELY!
-        try:
-            await invite.delete(reason=f"[{config.SERVER_NAME} ANTI-NUKE] Unauthorized invite creation by {inviter}.")
-            logger.warning(f"Anti-Nuke deleted unauthorized invite {invite.code} created by {inviter}")
-        except Exception as e:
-            logger.error(f"Failed to delete unauthorized invite: {e}")
-
-        member = guild.get_member(inviter.id)
-        if member:
-            await self._quarantine_and_kick(
-                guild=guild,
-                member=member,
-                reason=f"Created unauthorized server invite link `{invite.code}` (Role/Invite Nuke Safeguard).",
-                ban_user=True
-            )
 
     # --- 7. ANTI-UNAUTHORIZED DANGEROUS ROLE GRANT ---
 
@@ -661,25 +631,9 @@ class AntiNuke(commands.Cog):
         except Exception:
             pass
 
-    # --- 15. ANTI-UNAUTHORIZED INVITE CREATION GUARD ---
+    # --- 15. ANTI-UNAUTHORIZED INVITE CREATION GUARD (DISABLED TO ALLOW NORMAL MEMBER INVITES) ---
+    # Normal members can freely create invite links to invite friends without being banned.
 
-    @commands.Cog.listener()
-    async def on_invite_create(self, invite: discord.Invite):
-        guild = invite.guild
-        if not guild:
-            return
-        settings = db.get_guild_settings(str(guild.id))
-        if not settings.get("anti_nuke", 0):
-            return
-        inviter = invite.inviter
-        if inviter and not is_owner_or_immune(inviter, guild, self.bot):
-            try:
-                await invite.delete(reason="Unauthorized Invite Creation Blocked by Anti-Nuke.")
-            except Exception:
-                pass
-            inviter_member = guild.get_member(inviter.id)
-            if inviter_member:
-                await self._quarantine_and_kick(guild, inviter_member, "Unauthorized Invite Link Creation.", ban_user=True)
 
     # --- 16. ANTI-SCHEDULED EVENT NUKE PROTECTION ---
 
@@ -1098,9 +1052,95 @@ class AntiNuke(commands.Cog):
     async def slash_emergencylockdown(self, interaction: discord.Interaction):
         await self._do_emergency_lockdown(interaction)
 
-    @discord.app_commands.command(name="unlockdown", description="[OWNER ONLY] Lift emergency military lockdown and restore all channels")
-    async def slash_unlockdown(self, interaction: discord.Interaction):
-        await self._do_unlockdown(interaction)
+    async def _do_security_toggle(self, ctx_or_interaction, module: str, state: str):
+        is_interaction = isinstance(ctx_or_interaction, discord.Interaction)
+        if is_interaction:
+            if not ctx_or_interaction.response.is_done():
+                try:
+                    await ctx_or_interaction.response.defer(ephemeral=False)
+                except Exception:
+                    pass
+
+        guild = ctx_or_interaction.guild
+        user = ctx_or_interaction.user if is_interaction else ctx_or_interaction.author
+        is_admin = False
+        if guild and user:
+            if user.id == guild.owner_id:
+                is_admin = True
+            elif isinstance(user, discord.Member) and user.guild_permissions.administrator:
+                is_admin = True
+
+        if not is_admin:
+            embed = joyst_embed(description="❌ Only Server Administrator or Owner can toggle security modules.", color=COLOR_DANGER, guild=guild)
+            if is_interaction:
+                await ctx_or_interaction.followup.send(embed=embed, ephemeral=True)
+            else:
+                await ctx_or_interaction.send(embed=embed)
+            return
+
+        valid_modules = {
+            "anti_bot": "Anti-Bot Add Safeguard",
+            "anti_channel": "Anti-Channel Create/Delete Guard",
+            "anti_role": "Anti-Role Create/Delete Guard",
+            "anti_ban": "Anti-Mass Member Ban Guard",
+            "anti_webhook": "Anti-Webhook Creation Guard",
+            "anti_mention": "Anti-Mass Mention Spam Guard",
+            "anti_raid": "Anti-Raid Join Velocity Shield",
+            "anti_emoji": "Anti-Mass Emoji Delete Guard",
+            "anti_integration": "Anti-App Integration Add Guard",
+            "anti_role_grant": "Anti-Admin Role Grant Guard",
+            "anti_role_edit": "Anti-Role Perm Escalation Guard",
+            "anti_server_edit": "Anti-Server Settings Edit Guard"
+        }
+
+        mod_key = module.lower().strip()
+        if mod_key not in valid_modules:
+            embed = joyst_embed(description=f"❌ Invalid security module. Valid choices: `{', '.join(valid_modules.keys())}`", color=COLOR_DANGER, guild=guild)
+            if is_interaction:
+                await ctx_or_interaction.followup.send(embed=embed, ephemeral=True)
+            else:
+                await ctx_or_interaction.send(embed=embed)
+            return
+
+        val = 1 if state.lower() in ["enable", "on", "1", "true"] else 0
+        db.update_guild_setting(str(guild.id), mod_key, val)
+
+        mod_name = valid_modules[mod_key]
+        status_text = "ENABLED 🟢" if val == 1 else "DISABLED 🔴"
+        color = COLOR_SUCCESS if val == 1 else COLOR_DANGER
+
+        embed = joyst_embed(description=f"🛡️ **Security Module Updated:**\n**{mod_name}** (`{mod_key}`) is now **{status_text}**!", color=color, guild=guild)
+
+        if is_interaction:
+            await ctx_or_interaction.followup.send(embed=embed)
+        else:
+            await ctx_or_interaction.send(embed=embed)
+
+    @commands.command(name="securitytoggle", aliases=["sectoggle", "moduletoggle"])
+    async def prefix_securitytoggle(self, ctx, module: str, state: str):
+        """Toggle individual security module ON or OFF: ,securitytoggle anti_bot off"""
+        await self._do_security_toggle(ctx, module, state)
+
+    @discord.app_commands.command(name="securitytoggle", description="Toggle an individual security module ON or OFF")
+    @discord.app_commands.describe(module="Select security module to toggle", state="Choose enable or disable")
+    @discord.app_commands.choices(module=[
+        discord.app_commands.Choice(name="Anti-Bot Add", value="anti_bot"),
+        discord.app_commands.Choice(name="Anti-Channel Guard", value="anti_channel"),
+        discord.app_commands.Choice(name="Anti-Role Guard", value="anti_role"),
+        discord.app_commands.Choice(name="Anti-Mass Ban", value="anti_ban"),
+        discord.app_commands.Choice(name="Anti-Webhook", value="anti_webhook"),
+        discord.app_commands.Choice(name="Anti-Mass Mention", value="anti_mention"),
+        discord.app_commands.Choice(name="Anti-Raid Shield", value="anti_raid"),
+        discord.app_commands.Choice(name="Anti-Emoji Delete", value="anti_emoji"),
+        discord.app_commands.Choice(name="Anti-Admin Role Grant", value="anti_role_grant"),
+        discord.app_commands.Choice(name="Anti-Role Perm Escalation", value="anti_role_edit"),
+        discord.app_commands.Choice(name="Anti-Server Settings Edit", value="anti_server_edit"),
+    ], state=[
+        discord.app_commands.Choice(name="Enable (ON)", value="enable"),
+        discord.app_commands.Choice(name="Disable (OFF)", value="disable"),
+    ])
+    async def slash_securitytoggle(self, interaction: discord.Interaction, module: str, state: str):
+        await self._do_security_toggle(interaction, module, state)
 
 async def setup(bot):
     await bot.add_cog(AntiNuke(bot))

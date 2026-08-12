@@ -102,14 +102,17 @@ def landing_page():
 @app.route("/dashboard")
 def dashboard():
     if not is_admin_authenticated():
-        session["is_admin"] = True
-        session["user"] = {
-            "id": "1532079636643582052",
-            "username": "SYPHON Admin",
-            "avatar": "https://cdn.discordapp.com/embed/avatars/0.png"
-        }
-        bot_guilds = [str(g.id) for g in bot_instance.guilds] if bot_instance and hasattr(bot_instance, "guilds") and bot_instance.guilds else [str(getattr(config, "PRIMARY_GUILD_ID", ""))]
-        session["authorized_guild_ids"] = bot_guilds
+        if DISCORD_CLIENT_SECRET:
+            return redirect("/api/auth/discord")
+        else:
+            session["is_admin"] = True
+            session["user"] = {
+                "id": str(getattr(config, "BOT_OWNER_ID", "1532079636643582052")),
+                "username": "SYPHON Admin",
+                "avatar": "https://cdn.discordapp.com/embed/avatars/0.png"
+            }
+            bot_guilds = [str(g.id) for g in bot_instance.guilds] if bot_instance and hasattr(bot_instance, "guilds") and bot_instance.guilds else [str(getattr(config, "PRIMARY_GUILD_ID", ""))]
+            session["authorized_guild_ids"] = bot_guilds
     return render_template_safe("index.html")
 
 @app.route("/features")
@@ -340,6 +343,11 @@ def api_guilds():
 def check_guild_access(guild_id):
     if not is_admin_authenticated():
         return False
+    gid = str(guild_id) if guild_id else None
+    auth_guilds = session.get("authorized_guild_ids", [])
+    if not gid or gid not in auth_guilds:
+        logger.warning(f"Unauthorized Web Dashboard Guild Access Attempt for Guild ID {gid} by User {session.get('user')}")
+        return False
     return True
 
 @app.route("/api/settings/<guild_id>", methods=["GET"])
@@ -398,7 +406,22 @@ def api_logs():
     logs = db.get_audit_logs(guild_id, limit=50)
     return jsonify(logs)
 
-# --- PROTECTED ADMIN-ONLY MODIFICATION ENDPOINTS ---
+@app.route("/api/security/toggle", methods=["POST"])
+def api_security_toggle():
+    data = request.json or {}
+    guild_id = resolve_guild_id(data.get("guild_id"))
+    if not check_guild_access(guild_id):
+        return jsonify({"success": False, "error": "Unauthorized: Access Denied for Guild"}), 403
+
+    module_key = data.get("module")
+    state_val = int(data.get("state", 1))
+
+    if not module_key:
+        return jsonify({"success": False, "error": "Missing module parameter"}), 400
+
+    db.update_guild_setting(guild_id, module_key, state_val)
+    db.add_audit_log(guild_id, "SECURITY_MODULE_TOGGLE", f"Security module '{module_key}' set to {state_val} via Dashboard", severity="MEDIUM")
+    return jsonify({"success": True, "module": module_key, "state": state_val})
 
 @app.route("/api/settings/update", methods=["POST"])
 def api_update_settings():
