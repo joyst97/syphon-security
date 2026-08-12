@@ -74,12 +74,48 @@ def is_admin_authenticated():
     return bool(session.get("user")) and isinstance(session.get("authorized_guild_ids"), list)
 
 def resolve_guild_id(gid=None):
-    auth_guilds = session.get("authorized_guild_ids", [])
+    auth_guilds = session.get("authorized_guild_ids")
+    if not isinstance(auth_guilds, list) or len(auth_guilds) == 0:
+        return None
     if gid and str(gid) in auth_guilds:
         return str(gid)
-    if auth_guilds and len(auth_guilds) > 0:
-        return str(auth_guilds[0])
-    return None
+    return str(auth_guilds[0])
+
+@app.route("/api/guilds")
+def api_guilds():
+    if not is_admin_authenticated():
+        return jsonify([])
+
+    guilds_list = []
+    authorized_ids = session.get("authorized_guild_ids")
+    if not isinstance(authorized_ids, list) or len(authorized_ids) == 0:
+        return jsonify([])
+
+    if bot_instance and hasattr(bot_instance, "is_ready") and bot_instance.is_ready():
+        for g in bot_instance.guilds:
+            g_id_str = str(g.id)
+            if g_id_str in authorized_ids:
+                guilds_list.append({
+                    "id": g_id_str,
+                    "name": g.name,
+                    "member_count": g.member_count or len(g.members),
+                    "icon": str(g.icon.url) if g.icon else "/static/images/logo.png",
+                    "banner": str(g.banner.url) if hasattr(g, "banner") and g.banner else None
+                })
+
+    return jsonify(guilds_list)
+
+def check_guild_access(guild_id):
+    if not is_admin_authenticated():
+        return False
+    gid = str(guild_id) if guild_id else None
+    auth_guilds = session.get("authorized_guild_ids")
+    if not isinstance(auth_guilds, list) or len(auth_guilds) == 0:
+        return False
+    if not gid or gid not in auth_guilds:
+        logger.warning(f"Unauthorized Web Dashboard Guild Access Attempt for Guild ID {gid} by User {session.get('user')}")
+        return False
+    return True
 
 from flask import render_template_string
 
@@ -302,53 +338,7 @@ def api_stats():
         "status_text_members": f"Protecting {user_count:,} Members"
     })
 
-@app.route("/api/guilds")
-def api_guilds():
-    if not is_admin_authenticated():
-        return jsonify([])
-
-    guilds_list = []
-    authorized_ids = session.get("authorized_guild_ids", [])
-    if authorized_ids is None:
-        authorized_ids = []
-
-    if bot_instance and hasattr(bot_instance, "is_ready") and bot_instance.is_ready():
-        for g in bot_instance.guilds:
-            g_id_str = str(g.id)
-            if authorized_ids and g_id_str not in authorized_ids:
-                continue
-
-            guilds_list.append({
-                "id": g_id_str,
-                "name": g.name,
-                "member_count": g.member_count or len(g.members),
-                "icon": str(g.icon.url) if g.icon else "/static/images/logo.png",
-                "banner": str(g.banner.url) if hasattr(g, "banner") and g.banner else None
-            })
-
-    if not guilds_list:
-        default_gid = str(getattr(config, "PRIMARY_GUILD_ID", ""))
-        default_name = str(getattr(config, "SERVER_NAME", "Cyber Security OS"))
-        if default_gid:
-            guilds_list.append({
-                "id": default_gid,
-                "name": default_name,
-                "member_count": 0,
-                "icon": "/static/images/logo.png",
-                "banner": None
-            })
-
-    return jsonify(guilds_list)
-
-def check_guild_access(guild_id):
-    if not is_admin_authenticated():
-        return False
-    gid = str(guild_id) if guild_id else None
-    auth_guilds = session.get("authorized_guild_ids", [])
-    if not gid or gid not in auth_guilds:
-        logger.warning(f"Unauthorized Web Dashboard Guild Access Attempt for Guild ID {gid} by User {session.get('user')}")
-        return False
-    return True
+# Secure api_guilds and check_guild_access are active at top of file.
 
 @app.route("/api/settings/<guild_id>", methods=["GET"])
 def api_get_settings(guild_id):
