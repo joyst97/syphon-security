@@ -102,6 +102,32 @@ def api_guilds():
                     "icon": str(g.icon.url) if g.icon else "/static/images/logo.png",
                     "banner": str(g.banner.url) if hasattr(g, "banner") and g.banner else None
                 })
+    else:
+        bot_token = os.getenv("DISCORD_BOT_TOKEN", getattr(config, "DISCORD_BOT_TOKEN", ""))
+        headers = {"Authorization": f"Bot {bot_token}"} if bot_token else {}
+        for g_id in authorized_ids:
+            g_name = f"Guild {g_id}"
+            icon_url = "/static/images/logo.png"
+            member_cnt = 100
+            if bot_token:
+                try:
+                    gr = requests.get(f"https://discord.com/api/v10/guilds/{g_id}", headers=headers, timeout=5)
+                    if gr.status_code == 200:
+                        gd = gr.json()
+                        g_name = gd.get("name", g_name)
+                        icon_hash = gd.get("icon")
+                        if icon_hash:
+                            icon_url = f"https://cdn.discordapp.com/icons/{g_id}/{icon_hash}.png"
+                        member_cnt = gd.get("approximate_member_count", member_cnt)
+                except Exception:
+                    pass
+            guilds_list.append({
+                "id": str(g_id),
+                "name": g_name,
+                "member_count": member_cnt,
+                "icon": icon_url,
+                "banner": None
+            })
 
     return jsonify(guilds_list)
 
@@ -231,6 +257,19 @@ def api_auth_discord_callback():
         bot_guild_ids = set()
         if bot_instance and bot_instance.is_ready():
             bot_guild_ids = {str(bg.id) for bg in bot_instance.guilds}
+        else:
+            bot_token = os.getenv("DISCORD_BOT_TOKEN", getattr(config, "DISCORD_BOT_TOKEN", ""))
+            if bot_token:
+                try:
+                    bot_guilds_res = requests.get(
+                        "https://discord.com/api/v10/users/@me/guilds",
+                        headers={"Authorization": f"Bot {bot_token}"},
+                        timeout=5
+                    )
+                    if bot_guilds_res.status_code == 200:
+                        bot_guild_ids = {str(bg["id"]) for bg in bot_guilds_res.json()}
+                except Exception as bge:
+                    logger.warning(f"Error fetching bot guilds via API: {bge}")
 
         authorized_guild_ids = list(manageable_guild_ids.intersection(bot_guild_ids))
 
