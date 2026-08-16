@@ -90,6 +90,23 @@ class YTDLSource(discord.PCMVolumeTransformer):
     async def create_source(cls, search: str, requester: discord.User | discord.Member = None, filter_preset="clear", seek_seconds: int = 0, *, loop=None):
         loop = loop or asyncio.get_event_loop()
         
+        # Automatic Spotify Link Resolver (Spotify Track / Playlist -> Search Query)
+        if "spotify.com" in search or "spotify:" in search:
+            try:
+                import urllib.request, ssl, re
+                ctx = ssl._create_unverified_context()
+                req = urllib.request.Request(search, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"})
+                html = await loop.run_in_executor(None, lambda: urllib.request.urlopen(req, context=ctx).read().decode('utf-8', errors='ignore'))
+                meta_title = re.search(r'<meta property="og:title" content="(.*?)"', html)
+                meta_artist = re.search(r'<meta property="og:description" content="(.*?)"', html)
+                
+                sp_title = meta_title.group(1) if meta_title else ""
+                sp_artist = meta_artist.group(1).split("·")[0].split("-")[0].strip() if meta_artist else ""
+                if sp_title:
+                    search = f"{sp_title} {sp_artist}".strip()
+            except Exception as e:
+                logger.warning(f"Spotify URL parse error: {e}")
+
         is_url = search.startswith("http://") or search.startswith("https://")
         search_query = search if is_url else f"ytsearch1:{search}"
 
