@@ -169,11 +169,13 @@ def get_current_redirect_uri():
     if os.getenv("DISCORD_REDIRECT_URI"):
         return os.getenv("DISCORD_REDIRECT_URI")
     try:
-        if request and hasattr(request, 'host_url') and request.host_url:
-            host = request.host_url.rstrip('/')
-            return f"{host}/api/auth/discord/callback"
-    except Exception:
-        pass
+        if request:
+            proto = request.headers.get("X-Forwarded-Proto", request.scheme)
+            host = request.headers.get("X-Forwarded-Host", request.host)
+            if host:
+                return f"{proto}://{host}/api/auth/discord/callback"
+    except Exception as e:
+        logger.warning(f"Error resolving redirect URI: {e}")
     return getattr(config, "DISCORD_REDIRECT_URI", "http://us36.glacierhosting.org:3029/api/auth/discord/callback")
 
 @app.route("/login/discord")
