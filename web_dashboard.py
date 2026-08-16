@@ -427,6 +427,18 @@ def api_stats():
         db.set_stat_cache("user_count", user_count)
         db.set_stat_cache("channel_count", channel_count)
         db.set_stat_cache("role_count", role_count)
+    else:
+        bot_token = os.getenv("DISCORD_BOT_TOKEN", getattr(config, "DISCORD_BOT_TOKEN", ""))
+        if bot_token:
+            try:
+                headers = {"Authorization": f"Bot {bot_token}"}
+                r = requests.get("https://discord.com/api/v10/users/@me", headers=headers, timeout=4)
+                if r.status_code == 200:
+                    bot_status = "ONLINE"
+                    b_data = r.json()
+                    bot_name = b_data.get("username", "SYPHON SECURITY")
+            except Exception:
+                pass
 
     if guild_count < 50: guild_count = 50
     if user_count < 30000: user_count = 30000
