@@ -162,6 +162,10 @@ class TTS(commands.Cog):
                 if not guild:
                     continue
 
+                vc = guild.voice_client
+                if vc and vc.is_connected():
+                    continue
+
                 vc_channel = guild.get_channel(int(channel_id))
                 if not vc_channel or not isinstance(vc_channel, (discord.VoiceChannel, discord.StageChannel)):
                     continue

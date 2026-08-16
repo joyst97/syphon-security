@@ -44,9 +44,10 @@ YTDL_OPTIONS = {
     "age_limit": 0,
     "geo_bypass": True,
     "youtube_include_dash_manifest": False,
-    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "extractor_args": {
-        "youtube": ["player_client=ios,android"]
+        "youtube": {
+            "player_client": ["android", "web_creator"]
+        }
     }
 }
 
@@ -455,6 +456,55 @@ class Music(commands.Cog):
 
         self.bot.loop.create_task(prepare_and_play())
 
+    async def resolve_spotify_input(self, search: str):
+        loop = self.bot.loop
+        if "spotify.com/playlist/" in search or "spotify:playlist:" in search or "spotify.com/album/" in search or "spotify:album:" in search:
+            try:
+                import urllib.request, ssl, re
+                ctx = ssl._create_unverified_context()
+                req = urllib.request.Request(search, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"})
+                html = await loop.run_in_executor(None, lambda: urllib.request.urlopen(req, context=ctx).read().decode('utf-8', errors='ignore'))
+                
+                track_ids = re.findall(r'href="/track/([a-zA-Z0-9]+)"', html)
+                unique_track_ids = list(dict.fromkeys(track_ids))
+                
+                if unique_track_ids:
+                    queries = []
+                    for tid in unique_track_ids[:25]:
+                        t_url = f"https://open.spotify.com/track/{tid}"
+                        try:
+                            t_req = urllib.request.Request(t_url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"})
+                            t_html = await loop.run_in_executor(None, lambda: urllib.request.urlopen(t_req, context=ctx).read().decode('utf-8', errors='ignore'))
+                            m_title = re.search(r'<meta property="og:title" content="(.*?)"', t_html)
+                            m_artist = re.search(r'<meta property="og:description" content="(.*?)"', t_html)
+                            st = m_title.group(1) if m_title else ""
+                            sa = m_artist.group(1).split("·")[0].split("-")[0].strip() if m_artist else ""
+                            if st:
+                                queries.append(f"{st} {sa}".strip())
+                        except Exception:
+                            pass
+                    if queries:
+                        return queries
+            except Exception as e:
+                logger.warning(f"Spotify playlist parse error: {e}")
+
+        if "spotify.com/track/" in search or "spotify:track:" in search:
+            try:
+                import urllib.request, ssl, re
+                ctx = ssl._create_unverified_context()
+                req = urllib.request.Request(search, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"})
+                html = await loop.run_in_executor(None, lambda: urllib.request.urlopen(req, context=ctx).read().decode('utf-8', errors='ignore'))
+                m_title = re.search(r'<meta property="og:title" content="(.*?)"', html)
+                m_artist = re.search(r'<meta property="og:description" content="(.*?)"', html)
+                st = m_title.group(1) if m_title else ""
+                sa = m_artist.group(1).split("·")[0].split("-")[0].strip() if m_artist else ""
+                if st:
+                    return [f"{st} {sa}".strip()]
+            except Exception as e:
+                logger.warning(f"Spotify track parse error: {e}")
+
+        return [search]
+
     async def _do_play(self, ctx_or_interaction, query: str):
         guild = ctx_or_interaction.guild
         author = ctx_or_interaction.user if isinstance(ctx_or_interaction, discord.Interaction) else ctx_or_interaction.author
@@ -482,8 +532,11 @@ class Music(commands.Cog):
                 await ctx_or_interaction.send(embed=embed)
             return
 
+        queries = await self.resolve_spotify_input(query)
+        
+        first_query = queries[0]
         try:
-            source = await YTDLSource.create_source(query, requester=author, loop=self.bot.loop)
+            source = await YTDLSource.create_source(first_query, requester=author, loop=self.bot.loop)
         except Exception as e:
             embed = joyst_embed(description=f"❌ Failed to extract track details: `{e}`", color=COLOR_DANGER, guild=guild)
             if isinstance(ctx_or_interaction, discord.Interaction):
@@ -493,6 +546,16 @@ class Music(commands.Cog):
             return
 
         queue = self.get_queue(guild.id)
+
+        # Handle Spotify Playlist multiple track queuing
+        if len(queries) > 1:
+            for extra_q in queries[1:]:
+                queue.append({
+                    "url": extra_q,
+                    "requester": author,
+                    "title": extra_q,
+                    "filter": "clear"
+                })
 
         if vc.is_playing() or vc.is_paused():
             queue.append(source)
