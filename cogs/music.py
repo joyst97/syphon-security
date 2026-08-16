@@ -44,9 +44,9 @@ YTDL_OPTIONS = {
     "age_limit": 0,
     "geo_bypass": True,
     "youtube_include_dash_manifest": False,
-    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "extractor_args": {
-        "youtube": ["player_client=android,web"]
+        "youtube": ["player_client=ios,android"]
     }
 }
 
@@ -90,22 +90,38 @@ class YTDLSource(discord.PCMVolumeTransformer):
     async def create_source(cls, search: str, requester: discord.User | discord.Member = None, filter_preset="clear", seek_seconds: int = 0, *, loop=None):
         loop = loop or asyncio.get_event_loop()
         
-        search_query = search if (search.startswith("http://") or search.startswith("https://")) else f"ytsearch1:{search}"
+        is_url = search.startswith("http://") or search.startswith("https://")
+        search_query = search if is_url else f"ytsearch1:{search}"
 
-        data = await loop.run_in_executor(None, lambda: ytdl.extract_info(search_query, download=False))
+        data = None
+        try:
+            data = await loop.run_in_executor(None, lambda: ytdl.extract_info(search_query, download=False))
+            if data and "entries" in data:
+                if len(data["entries"]) > 0:
+                    data = data["entries"][0]
+                else:
+                    data = None
+        except Exception as e:
+            logger.warning(f"YouTube extract error on VPS: {e}")
+            data = None
 
-        if "entries" in data:
-            if len(data["entries"]) > 0:
-                data = data["entries"][0]
-            else:
-                raise Exception("No audio search results found.")
+        # Automatic VPS Fallback: If YouTube DRM / 403 Block occurs on Datacenter IP, use SoundCloud search engine!
+        if (not data or not data.get("url")) and not is_url:
+            logger.info(f"Triggering VPS Datacenter Fallback (SoundCloud) for track: {search}")
+            try:
+                sc_query = f"scsearch1:{search}"
+                data = await loop.run_in_executor(None, lambda: ytdl.extract_info(sc_query, download=False))
+                if data and "entries" in data and len(data["entries"]) > 0:
+                    data = data["entries"][0]
+            except Exception as e:
+                logger.error(f"SoundCloud fallback error: {e}")
+
+        if not data or not data.get("url"):
+            raise Exception("Audio stream could not be extracted from YouTube or SoundCloud.")
 
         stream_url = data.get("url")
-        if not stream_url:
-            raise Exception("Direct audio stream URL could not be extracted.")
 
-        # HTTP User-Agent & Reconnect Headers to prevent YouTube CDN 2-second 403 HTTP disconnect drops!
-        headers_str = '-headers "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)\r\n"'
+        headers_str = '-headers "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\r\nAccept: */*\r\nReferer: https://www.youtube.com/\r\n"'
         if seek_seconds > 0:
             before_opts = f'{headers_str} -ss {seek_seconds} -reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5'
         else:
@@ -358,9 +374,18 @@ class Music(commands.Cog):
                         self.play_next(ctx_or_interaction, guild_id)
                 self.bot.loop.create_task(trigger_autoplay())
             else:
-                # When queue finishes, DO NOT DISCONNECT! Keep voice connection active!
+                # When queue finishes, clear VC status and send Playback Stopped Embed to channel!
                 if vc.channel:
                     self.bot.loop.create_task(set_vc_status(vc.channel, ""))
+                
+                ch = ctx_or_interaction.channel if hasattr(ctx_or_interaction, "channel") else None
+                if ch:
+                    embed = joyst_embed(
+                        description=f"⏹️ {get_emoji('stop', guild)} **Music Playback Stopped — Queue Has Ended!**\n\n💡 *Use `/play <song>` or `,p <song>` to play more tracks!*",
+                        color=COLOR_WARNING,
+                        guild=guild
+                    )
+                    self.bot.loop.create_task(ch.send(embed=embed))
             return
 
         next_item = queue.pop(0)

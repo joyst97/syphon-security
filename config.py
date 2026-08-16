@@ -8,7 +8,7 @@ load_dotenv(override=True)
 BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
 DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID", "1534949562383339660")
 DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET", "wP02j11URduSGApEmF0p2N3enV7GPvnT")
-DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI", "http://n4.nccloud.sbs:2003/api/auth/discord/callback")
+DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI", "http://us36.glacierhosting.org:3029/api/auth/discord/callback")
 
 # Server & Channel Settings
 SERVER_NAME = os.getenv("SERVER_NAME", "JOYST CORPORATION")
@@ -17,7 +17,7 @@ AI_CHAT_CHANNEL_ID = int(os.getenv("AI_CHAT_CHANNEL_ID", 1534232782690320604))
 SECURITY_LOG_CHANNEL_ID = int(os.getenv("SECURITY_LOG_CHANNEL_ID", 1441003381689942127))
 
 # Dashboard Settings
-WEB_PORT = int(os.getenv("PORT", 2003))
+WEB_PORT = int(os.getenv("PORT", 3029))
 SECRET_KEY = os.getenv("SECRET_KEY", "aegis-security-secret-key-2026")
 ADMIN_KEY = os.getenv("ADMIN_KEY", "admin123")
 
