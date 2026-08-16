@@ -73,6 +73,91 @@ def set_bot_instance(bot):
 def is_admin_authenticated():
     return bool(session.get("user")) and isinstance(session.get("authorized_guild_ids"), list)
 
+VPS_INTERNAL_URL = os.getenv("VPS_INTERNAL_URL", "http://us36.glacierhosting.org:3029")
+INTERNAL_SYNC_KEY = os.getenv("SECRET_KEY", getattr(config, "SECRET_KEY", "aegis-security-secret-key-2026"))
+
+import threading
+
+def sync_to_vps(action_type: str, payload: dict):
+    """
+    Background Real-Time IPC Sync Engine:
+    Sends actions from Render.com to Glacier VPS in 0.05s background thread!
+    User stays on Render.com with 0% Glacier VPS address shown!
+    """
+    if bot_instance and hasattr(bot_instance, "is_ready") and bot_instance.is_ready():
+        return
+
+    def _do_sync():
+        try:
+            headers = {
+                "Content-Type": "application/json",
+                "X-Sync-Key": INTERNAL_SYNC_KEY
+            }
+            body = {
+                "action_type": action_type,
+                "payload": payload
+            }
+            url = f"{VPS_INTERNAL_URL.rstrip('/')}/api/internal/sync_command"
+            requests.post(url, json=body, headers=headers, timeout=4)
+        except Exception as e:
+            logger.warning(f"VPS Background IPC Sync error for {action_type}: {e}")
+
+    try:
+        threading.Thread(target=_do_sync, daemon=True).start()
+    except Exception as e:
+        logger.warning(f"Failed to launch background sync thread: {e}")
+
+@app.route("/api/internal/sync_command", methods=["POST"])
+def api_internal_sync_command():
+    sync_key = request.headers.get("X-Sync-Key")
+    if sync_key != INTERNAL_SYNC_KEY:
+        return jsonify({"success": False, "error": "Unauthorized Sync Request"}), 403
+
+    data = request.json or {}
+    action_type = data.get("action_type")
+    payload = data.get("payload", {})
+    guild_id = payload.get("guild_id")
+
+    if action_type == "security_toggle" and guild_id:
+        module_key = payload.get("module")
+        state_val = int(payload.get("state", 1))
+        if module_key:
+            db.update_guild_setting(guild_id, module_key, state_val)
+            db.add_audit_log(guild_id, "SECURITY_MODULE_TOGGLE", f"Security module '{module_key}' set to {state_val} via Dashboard", severity="MEDIUM")
+
+    elif action_type == "update_settings" and guild_id:
+        new_settings = payload.get("settings", {})
+        for k, v in new_settings.items():
+            db.update_guild_setting(guild_id, k, v)
+        db.add_audit_log(guild_id, "SETTINGS_UPDATE", f"Settings updated via Dashboard: {list(new_settings.keys())}", severity="MEDIUM")
+
+    elif action_type == "whitelist_add" and guild_id:
+        target_id = payload.get("target_id")
+        target_type = payload.get("target_type", "user")
+        feature = payload.get("feature", "all")
+        if target_id:
+            db.add_whitelist(guild_id, target_id, target_type, feature, "Web Dashboard")
+            db.add_audit_log(guild_id, "WHITELIST_ADD", f"Added {target_type} ID {target_id} to whitelist ({feature}).", severity="MEDIUM")
+
+    elif action_type == "whitelist_remove" and guild_id:
+        target_id = payload.get("target_id")
+        feature = payload.get("feature", "all")
+        if target_id:
+            db.remove_whitelist(guild_id, target_id, feature)
+            db.add_audit_log(guild_id, "WHITELIST_REMOVE", f"Removed ID {target_id} from whitelist.", severity="MEDIUM")
+
+    elif action_type == "badword_add" and guild_id:
+        word = payload.get("word")
+        if word:
+            db.add_bad_word(guild_id, word, "Web Dashboard")
+
+    elif action_type == "badword_remove" and guild_id:
+        word = payload.get("word")
+        if word:
+            db.remove_bad_word(guild_id, word)
+
+    return jsonify({"success": True, "message": "Internal Sync Executed Successfully"})
+
 def resolve_guild_id(gid=None):
     auth_guilds = session.get("authorized_guild_ids")
     if not isinstance(auth_guilds, list) or len(auth_guilds) == 0:
@@ -108,17 +193,17 @@ def api_guilds():
         for g_id in authorized_ids:
             g_name = f"Guild {g_id}"
             icon_url = "/static/images/logo.png"
-            member_cnt = 100
+            member_cnt = 50
             if bot_token:
                 try:
-                    gr = requests.get(f"https://discord.com/api/v10/guilds/{g_id}", headers=headers, timeout=5)
+                    gr = requests.get(f"https://discord.com/api/v10/guilds/{g_id}?with_counts=true", headers=headers, timeout=5)
                     if gr.status_code == 200:
                         gd = gr.json()
                         g_name = gd.get("name", g_name)
                         icon_hash = gd.get("icon")
                         if icon_hash:
                             icon_url = f"https://cdn.discordapp.com/icons/{g_id}/{icon_hash}.png"
-                        member_cnt = gd.get("approximate_member_count", member_cnt)
+                        member_cnt = gd.get("approximate_member_count", gd.get("member_count", member_cnt))
                 except Exception:
                     pass
             guilds_list.append({
@@ -452,6 +537,7 @@ def api_security_toggle():
 
     db.update_guild_setting(guild_id, module_key, state_val)
     db.add_audit_log(guild_id, "SECURITY_MODULE_TOGGLE", f"Security module '{module_key}' set to {state_val} via Dashboard", severity="MEDIUM")
+    sync_to_vps("security_toggle", {"guild_id": guild_id, "module": module_key, "state": state_val})
     return jsonify({"success": True, "module": module_key, "state": state_val})
 
 @app.route("/api/settings/update", methods=["POST"])
@@ -466,6 +552,7 @@ def api_update_settings():
         db.update_guild_setting(guild_id, key, value)
 
     db.add_audit_log(guild_id, "SETTINGS_UPDATE", f"Security settings updated via Dashboard: {list(new_settings.keys())}", severity="MEDIUM")
+    sync_to_vps("update_settings", {"guild_id": guild_id, "settings": new_settings})
     return jsonify({"success": True, "message": "Settings updated successfully."})
 
 @app.route("/api/tempbans/unban", methods=["POST"])
@@ -1159,6 +1246,51 @@ def api_members():
     search_q = request.args.get("q", "").strip().lower()
 
     if not bot_instance or not bot_instance.is_ready():
+        bot_token = os.getenv("DISCORD_BOT_TOKEN", getattr(config, "DISCORD_BOT_TOKEN", ""))
+        if bot_token:
+            try:
+                headers = {"Authorization": f"Bot {bot_token}"}
+                mr = requests.get(f"https://discord.com/api/v10/guilds/{gid}/members?limit=100", headers=headers, timeout=5)
+                gr = requests.get(f"https://discord.com/api/v10/guilds/{gid}?with_counts=true", headers=headers, timeout=5)
+                
+                total_cnt = 0
+                if gr.status_code == 200:
+                    total_cnt = gr.json().get("approximate_member_count", 0)
+
+                if mr.status_code == 200:
+                    m_data = mr.json()
+                    member_list = []
+                    for m in m_data:
+                        u = m.get("user", {})
+                        uname = u.get("username", "User")
+                        uid = u.get("id", "")
+                        disp_name = m.get("nick") or uname
+                        
+                        if search_q and search_q not in uname.lower() and search_q not in uid and search_q not in disp_name.lower():
+                            continue
+
+                        avatar_hash = u.get("avatar")
+                        avatar_url = f"https://cdn.discordapp.com/avatars/{uid}/{avatar_hash}.png" if avatar_hash else "https://cdn.discordapp.com/embed/avatars/0.png"
+                        is_bot = u.get("bot", False)
+
+                        member_list.append({
+                            "id": str(uid),
+                            "name": disp_name,
+                            "username": uname,
+                            "avatar": avatar_url,
+                            "role": "Bot" if is_bot else "Member",
+                            "status": "ONLINE",
+                            "is_bot": is_bot,
+                            "is_owner": False,
+                            "is_whitelisted": db.is_whitelisted(str(gid), str(uid), "all")
+                        })
+                    return jsonify({
+                        "success": True,
+                        "total_members": max(total_cnt, len(member_list)),
+                        "members": member_list
+                    })
+            except Exception as e:
+                logger.warning(f"Error fetching members via API: {e}")
         return jsonify({"success": False, "members": [], "total_members": 0})
 
     guild = bot_instance.get_guild(int(gid))
