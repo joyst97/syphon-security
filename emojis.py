@@ -81,9 +81,18 @@ def parse_custom_emoji_input(input_str: str, guild: discord.Guild = None, client
     return get_emoji(clean_term, guild)
 
 def replace_emoji_tags(text_content: str, guild: discord.Guild = None, client: discord.Client = None) -> str:
-    """Scans text for ':name:' and unicode emojis, converting them to custom server emojis while keeping existing '<a:name:id>' untouched!"""
+    """Scans text for ':name:' and unicode emojis, converting them to custom server emojis while preserving Discord timestamps and custom animated emojis!"""
     if not text_content:
         return text_content
+
+    # Preserve Discord timestamp tags like <t:1725470000:R> or <t:1725470000:f>
+    timestamps = []
+    def save_ts(m):
+        timestamps.append(m.group(0))
+        return f"__DISCORD_TS_{len(timestamps)-1}__"
+
+    res = str(text_content)
+    res = re.sub(r"<t:\d+(?::[a-zA-Z])?>", save_ts, res)
 
     # 1. Convert standard unicode emojis to server custom emojis
     unicode_map = {
@@ -98,13 +107,22 @@ def replace_emoji_tags(text_content: str, guild: discord.Guild = None, client: d
         "📢": get_emoji("bell", guild),
     }
 
-    res = str(text_content)
     for u_char, c_emoji in unicode_map.items():
         res = res.replace(u_char, c_emoji)
 
     # 2. Convert :emoji_name: tags
     if ":" in res:
         pattern = r"(?<!<a)(?<!<):([a-zA-Z0-9_\-]+):(?![\d]+>)"
-        res = re.sub(pattern, lambda m: get_emoji(m.group(1), guild), res)
+        def _sub_emoji(m):
+            tag_name = m.group(1)
+            if tag_name.isdigit() or len(tag_name) <= 1:
+                return m.group(0)
+            emoji_str = get_emoji(tag_name, guild)
+            return emoji_str if emoji_str != "•" else m.group(0)
+        res = re.sub(pattern, _sub_emoji, res)
+
+    # Restore preserved timestamps
+    for i, ts_val in enumerate(timestamps):
+        res = res.replace(f"__DISCORD_TS_{i}__", ts_val)
 
     return res
