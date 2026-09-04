@@ -1,0 +1,27 @@
+# Environment Variables & Secrets
+.env
+.env.local
+.env.*
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Local SQLite Database & Audio Temp Files
+*.db
+*.sqlite3
+aegis_security.db
+temp_music/
+*.log
+
+# Deployment Archives & Local Zip Artifacts
+*.zip
+SYPHON_SECURITY_BOT_UPDATE.zip
+
+# IDE & OS Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
