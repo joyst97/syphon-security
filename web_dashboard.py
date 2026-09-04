@@ -24,8 +24,8 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 CORS(app)
 
 DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID", getattr(config, "DISCORD_CLIENT_ID", "1534949562383339660"))
-DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET", getattr(config, "DISCORD_CLIENT_SECRET", ""))
-DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI", getattr(config, "DISCORD_REDIRECT_URI", "https://syphon-security-bot.onrender.com/api/auth/discord/callback"))
+DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET", getattr(config, "DISCORD_CLIENT_SECRET", "wP02j11URduSGApEmF0p2N3enV7GPvnT"))
+DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI", getattr(config, "DISCORD_REDIRECT_URI", "http://us36.glacierhosting.org:3029/api/auth/discord/callback"))
 
 import re
 
@@ -300,7 +300,7 @@ def get_current_redirect_uri():
                 return f"{proto}://{host}/api/auth/discord/callback"
     except Exception as e:
         logger.warning(f"Error resolving redirect URI: {e}")
-    return getattr(config, "DISCORD_REDIRECT_URI", "https://syphon-security-bot.onrender.com/api/auth/discord/callback")
+    return getattr(config, "DISCORD_REDIRECT_URI", "http://us36.glacierhosting.org:3029/api/auth/discord/callback")
 
 @app.route("/login/discord")
 @app.route("/api/auth/discord")

@@ -505,10 +505,20 @@ def toggle_giveaway_entry_db(message_id: str, user_id: str):
     cursor.execute("SELECT entries FROM giveaways WHERE message_id = ?", (str(message_id),))
     row = cursor.fetchone()
     if not row:
+        import time
+        cursor.execute(
+            "INSERT OR IGNORE INTO giveaways (guild_id, channel_id, message_id, prize, winners_count, end_timestamp, host_id, entries) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            ("0", "0", str(message_id), "Giveaway", 1, int(time.time()) + 86400, "0", json.dumps([str(user_id)]))
+        )
+        conn.commit()
         conn.close()
-        return False, 0
+        return True, 1
 
-    entries = json.loads(row["entries"])
+    try:
+        entries = json.loads(row["entries"]) if row["entries"] else []
+    except Exception:
+        entries = []
+
     uid = str(user_id)
     entered = False
     if uid in entries:

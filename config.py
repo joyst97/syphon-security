@@ -4,11 +4,10 @@ from dotenv import load_dotenv
 # Central load of .env file
 load_dotenv(override=True)
 
-# Discord Bot Credentials
-BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
+BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN", "")
 DISCORD_CLIENT_ID = os.getenv("DISCORD_CLIENT_ID", "1534949562383339660")
 DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET", "")
-DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI", "https://syphon-security-bot.onrender.com/api/auth/discord/callback")
+DISCORD_REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI", "http://us36.glacierhosting.org:3029/api/auth/discord/callback")
 
 # Server & Channel Settings
 SERVER_NAME = os.getenv("SERVER_NAME", "JOYST CORPORATION")
